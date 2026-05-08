@@ -67,3 +67,64 @@ it('restaurant can create a food post', function () {
         'status' => 'available',
     ]);
 });
+
+it('verified restaurant can see its own food posts', function () {
+    $restaurant = User::factory()->create([
+        'role' => 'restaurant',
+    ]);
+
+    $restaurant->profile()->create([
+        'name' => 'Restoran Saya',
+        'address' => 'Jl. Mawar No. 7',
+        'verification_status' => 'verified',
+    ]);
+
+    FoodPost::create([
+        'user_id' => $restaurant->id,
+        'title' => 'Sup Hangat',
+        'quantity' => 7,
+        'quantity_unit' => 'porsi',
+        'pickup_address' => 'Jl. Mawar No. 7',
+        'available_until' => now()->addHours(2),
+        'status' => 'available',
+    ]);
+
+    $response = $this->actingAs($restaurant)->getJson('/api/my-food-posts');
+
+    $response->assertOk();
+    $response->assertJsonCount(1, 'food_posts');
+    $response->assertJsonPath('food_posts.0.title', 'Sup Hangat');
+});
+
+it('restaurant can update status of its own food post', function () {
+    $restaurant = User::factory()->create([
+        'role' => 'restaurant',
+    ]);
+
+    $restaurant->profile()->create([
+        'name' => 'Restoran Update',
+        'address' => 'Jl. Kenanga No. 9',
+        'verification_status' => 'verified',
+    ]);
+
+    $foodPost = FoodPost::create([
+        'user_id' => $restaurant->id,
+        'title' => 'Lauk Siap Ambil',
+        'quantity' => 4,
+        'quantity_unit' => 'paket',
+        'pickup_address' => 'Jl. Kenanga No. 9',
+        'available_until' => now()->addHours(2),
+        'status' => 'available',
+    ]);
+
+    $response = $this->actingAs($restaurant)
+        ->patchJson("/api/food-posts/{$foodPost->id}", [
+            'status' => 'completed',
+        ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('food_posts', [
+        'id' => $foodPost->id,
+        'status' => 'completed',
+    ]);
+});

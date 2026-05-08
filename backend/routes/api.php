@@ -17,7 +17,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user()->load('profile');
     });
+    Route::get('/my-food-posts', [FoodPostController::class, 'mine']);
     Route::post('/food-posts', [FoodPostController::class, 'store']);
+    Route::patch('/food-posts/{foodPost}', [FoodPostController::class, 'update']);
     Route::get('/claims', [ClaimController::class, 'index']);
     Route::post('/food-posts/{foodPost}/claims', [ClaimController::class, 'store']);
 });

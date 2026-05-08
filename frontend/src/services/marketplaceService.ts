@@ -12,6 +12,8 @@ export type MarketplaceFoodPost = {
   available_until: string;
   image_url?: string | null;
   status: 'available' | 'claimed' | 'completed' | 'expired';
+  created_at?: string;
+  updated_at?: string;
   user: {
     id: number;
     name: string;
@@ -20,6 +22,29 @@ export type MarketplaceFoodPost = {
       address?: string;
     } | null;
   };
+};
+
+export type FoodPostPayload = {
+  title: string;
+  description?: string;
+  quantity: number;
+  quantity_unit: string;
+  pickup_address: string;
+  lat?: number | null;
+  long?: number | null;
+  available_until: string;
+  image_url?: string;
+  status?: 'available' | 'claimed' | 'completed' | 'expired';
+};
+
+export type MarketplaceClaim = {
+  id: number;
+  quantity: number;
+  notes?: string | null;
+  status: 'pending' | 'approved' | 'completed' | 'cancelled' | 'rejected';
+  created_at?: string;
+  updated_at?: string;
+  food_post: MarketplaceFoodPost;
 };
 
 export const getFoodPosts = async (search?: string) => {
@@ -31,6 +56,29 @@ export const getFoodPosts = async (search?: string) => {
   });
 
   return response.data as { food_posts: MarketplaceFoodPost[] };
+};
+
+export const getMyFoodPosts = async () => {
+  const response = await axios.get('/my-food-posts');
+  return response.data as { food_posts: MarketplaceFoodPost[] };
+};
+
+export const createFoodPost = async (payload: FoodPostPayload) => {
+  const response = await axios.post('/food-posts', payload);
+  return response.data as { food_post: MarketplaceFoodPost };
+};
+
+export const updateFoodPost = async (
+  foodPostId: number,
+  payload: Partial<FoodPostPayload>
+) => {
+  const response = await axios.patch(`/food-posts/${foodPostId}`, payload);
+  return response.data as { food_post: MarketplaceFoodPost };
+};
+
+export const getMyClaims = async () => {
+  const response = await axios.get('/claims');
+  return response.data as { claims: MarketplaceClaim[] };
 };
 
 export const claimFoodPost = async (foodPostId: number, quantity = 1, notes?: string) => {

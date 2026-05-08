@@ -8,6 +8,19 @@ use Illuminate\Http\Request;
 
 class FoodPostController extends Controller
 {
+    public function mine(Request $request)
+    {
+        $foodPosts = $request->user()
+            ->foodPosts()
+            ->with(['user.profile', 'claims.user.profile'])
+            ->latest()
+            ->get();
+
+        return response()->json([
+            'food_posts' => $foodPosts,
+        ]);
+    }
+
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -57,6 +70,11 @@ class FoodPostController extends Controller
     public function store(Request $request)
     {
         abort_unless($request->user()->isRestaurant() || $request->user()->isAdmin(), 403);
+        abort_unless(
+            $request->user()->isAdmin() || $request->user()->profile?->verification_status === 'verified',
+            403,
+            'Akun Anda harus terverifikasi untuk membuat food post.'
+        );
 
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -80,5 +98,32 @@ class FoodPostController extends Controller
         return response()->json([
             'food_post' => $foodPost->load('user.profile'),
         ], 201);
+    }
+
+    public function update(Request $request, FoodPost $foodPost)
+    {
+        abort_unless(
+            $request->user()->isAdmin() || $foodPost->user_id === $request->user()->id,
+            403
+        );
+
+        $validated = $request->validate([
+            'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'description' => ['sometimes', 'nullable', 'string'],
+            'quantity' => ['sometimes', 'required', 'integer', 'min:1'],
+            'quantity_unit' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'pickup_address' => ['sometimes', 'required', 'string'],
+            'lat' => ['sometimes', 'nullable', 'numeric', 'between:-90,90'],
+            'long' => ['sometimes', 'nullable', 'numeric', 'between:-180,180'],
+            'available_until' => ['sometimes', 'required', 'date'],
+            'image_url' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'status' => ['sometimes', 'required', 'string', 'in:available,claimed,completed,expired'],
+        ]);
+
+        $foodPost->update($validated);
+
+        return response()->json([
+            'food_post' => $foodPost->fresh()->load(['user.profile', 'claims.user.profile']),
+        ]);
     }
 }
