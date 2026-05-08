@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from '@/lib/axios';
+import Cookies from 'js-cookie';
 
 interface User {
   id: number;
@@ -30,22 +31,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
+    const storedToken = localStorage.getItem('token') || Cookies.get('token');
     const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setToken(storedToken);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(storedUser));
+      
+      // Sync cookie if only in localStorage
+      if (!Cookies.get('token')) {
+        Cookies.set('token', storedToken, { expires: 7, sameSite: 'lax' });
+      }
     }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(false);
   }, []);
 
   const login = (newToken: string, newUser: User) => {
     localStorage.setItem('token', newToken);
     localStorage.setItem('user', JSON.stringify(newUser));
+    Cookies.set('token', newToken, { expires: 7, sameSite: 'lax' });
     setToken(newToken);
     setUser(newUser);
     router.push('/dashboard');
@@ -54,6 +58,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    Cookies.remove('token');
     setToken(null);
     setUser(null);
     router.push('/login');
