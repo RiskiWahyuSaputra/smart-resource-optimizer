@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -22,6 +22,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { getEchoClient } from '@/lib/reverbClient';
 import {
   getDashboardAnalytics,
   type DashboardAnalytics,
@@ -251,7 +252,7 @@ function getToneClasses(tone: DashboardStatTone) {
 }
 
 export default function DashboardPage() {
-  const { user, loading, logout } = useAuth();
+  const { user, token, loading, logout, checkAuth } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('overview');
   const [verificationUsers, setVerificationUsers] = useState<VerificationUser[]>([]);
@@ -297,11 +298,69 @@ export default function DashboardPage() {
     image_url: '',
   });
 
+  const loadDashboardOverviewAnalytics = useCallback(async () => {
+    try {
+      setAnalyticsLoading(true);
+      setAnalyticsError('');
+      const data = await getDashboardAnalytics();
+      setDashboardAnalytics(data);
+    } catch {
+      setAnalyticsError('Gagal memuat analytics dashboard.');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }, []);
+
+  const loadAllVerifications = useCallback(async () => {
+    const data = await getVerificationUsers(verificationFilter);
+    setVerificationUsers(data.users ?? []);
+
+    const allData =
+      verificationFilter === 'all' ? data : await getVerificationUsers('all');
+
+    setVerificationCounts(
+      allData.counts ?? { pending: 0, verified: 0, rejected: 0 }
+    );
+  }, [verificationFilter]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  // Realtime updates via Reverb
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const echo = getEchoClient(token);
+
+    // 1. Listen for user-specific verification updates
+    const userChannel = echo.private(`user.${user.id}`);
+    userChannel.listen('.user.verification.updated', (data: unknown) => {
+      console.log('User verification updated (realtime):', data);
+      void checkAuth(); // Refresh user object in context
+    });
+
+    // 2. Listen for admin-wide updates
+    if (user.role === 'admin') {
+      const adminChannel = echo.private('admin');
+      adminChannel.listen('.user.verification.updated', (data: unknown) => {
+        console.log('Admin: User verification updated (realtime):', data);
+        void loadAllVerifications();
+        void loadDashboardOverviewAnalytics();
+      });
+
+      return () => {
+        userChannel.stopListening('.user.verification.updated');
+        adminChannel.stopListening('.user.verification.updated');
+      };
+    }
+
+    return () => {
+      userChannel.stopListening('.user.verification.updated');
+    };
+  }, [user, token, checkAuth, loadAllVerifications, loadDashboardOverviewAnalytics]);
 
   const isAdmin = user?.role === 'admin';
 
@@ -310,8 +369,9 @@ export default function DashboardPage() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadDashboardOverviewAnalytics();
-  }, [user]);
+  }, [user, loadDashboardOverviewAnalytics]);
 
   useEffect(() => {
     if (!user || !isAdmin) {
@@ -457,31 +517,6 @@ export default function DashboardPage() {
   const pendingVerificationUsers = verificationUsers
     .filter((verificationUser) => verificationUser.profile?.verification_status === 'pending')
     .slice(0, 3);
-
-  async function loadDashboardOverviewAnalytics() {
-    try {
-      setAnalyticsLoading(true);
-      setAnalyticsError('');
-      const data = await getDashboardAnalytics();
-      setDashboardAnalytics(data);
-    } catch {
-      setAnalyticsError('Gagal memuat analytics dashboard.');
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  }
-
-  const loadAllVerifications = async () => {
-    const data = await getVerificationUsers(verificationFilter);
-    setVerificationUsers(data.users ?? []);
-
-    const allData =
-      verificationFilter === 'all' ? data : await getVerificationUsers('all');
-
-    setVerificationCounts(
-      allData.counts ?? { pending: 0, verified: 0, rejected: 0 }
-    );
-  };
 
   const closeDocumentPreview = () => {
     setDocumentPreview((currentPreview) => {

@@ -8,10 +8,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+use App\Events\UserVerificationUpdated;
+
 class AdminController extends Controller
 {
     public function index(Request $request)
     {
+
         $validated = $request->validate([
             'status' => ['nullable', 'string', 'in:pending,verified,rejected,all'],
         ]);
@@ -47,10 +50,19 @@ class AdminController extends Controller
 
         $action->execute($user, $request->status);
 
+        $user->refresh();
+
+        broadcast(new UserVerificationUpdated(
+            userId: $user->id,
+            verificationStatus: (string) $request->status
+        ))->toOthers();
+
+
         return response()->json([
             'message' => 'User verification status updated successfully.',
             'user' => $user->load('profile'),
         ]);
+
     }
 
     public function document(User $user)
