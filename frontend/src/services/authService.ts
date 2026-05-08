@@ -1,11 +1,11 @@
 import axios from '@/lib/axios';
 
-export const register = async (data: any) => {
+export const register = async (data: Record<string, unknown>) => {
   const response = await axios.post('/register', data);
   return response.data;
 };
 
-export const login = async (data: any) => {
+export const login = async (data: Record<string, unknown>) => {
   const response = await axios.post('/login', data);
   return response.data;
 };
