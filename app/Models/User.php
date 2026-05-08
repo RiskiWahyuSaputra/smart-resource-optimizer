@@ -27,6 +27,11 @@ class User extends Authenticatable
     public function isCommunity(): bool { return $this->role === 'community'; }
     public function isAdmin(): bool { return $this->role === 'admin'; }
 
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
