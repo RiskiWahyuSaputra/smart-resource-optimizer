@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ClaimController;
+use App\Http\Controllers\Api\DashboardAnalyticsController;
 use App\Http\Controllers\Api\FoodPostController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user()->load('profile');
     });
+    Route::get('/dashboard/analytics', [DashboardAnalyticsController::class, 'show']);
     Route::get('/my-food-posts', [FoodPostController::class, 'mine']);
     Route::post('/food-posts', [FoodPostController::class, 'store']);
     Route::patch('/food-posts/{foodPost}', [FoodPostController::class, 'update']);

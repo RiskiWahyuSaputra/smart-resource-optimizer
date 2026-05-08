@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  AlertCircle,
   CheckCircle2,
   Clock,
   Eye,
@@ -13,7 +12,6 @@ import {
   Inbox,
   LayoutDashboard,
   LogOut,
-  MapPin,
   PlusCircle,
   Settings,
   ShieldCheck,
@@ -24,6 +22,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import {
+  getDashboardAnalytics,
+  type DashboardAnalytics,
+  type DashboardStatTone,
+} from '@/services/dashboardService';
 import {
   getVerificationDocument,
   getVerificationUsers,
@@ -149,6 +152,10 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
+function formatNumber(value: number) {
+  return new Intl.NumberFormat('id-ID').format(value);
+}
+
 function formatDateTimeLocal(value?: string) {
   if (!value) {
     const nextFourHours = new Date(Date.now() + 4 * 60 * 60 * 1000);
@@ -201,6 +208,48 @@ function formatClaimStatus(status: MarketplaceClaim['status']) {
   return config[status];
 }
 
+function getToneClasses(tone: DashboardStatTone) {
+  const tones: Record<DashboardStatTone, { surface: string; text: string; bar: string }> = {
+    emerald: {
+      surface: 'bg-emerald-50 text-emerald-700',
+      text: 'text-emerald-600',
+      bar: 'bg-emerald-500',
+    },
+    amber: {
+      surface: 'bg-amber-50 text-amber-700',
+      text: 'text-amber-600',
+      bar: 'bg-amber-500',
+    },
+    blue: {
+      surface: 'bg-blue-50 text-blue-700',
+      text: 'text-blue-600',
+      bar: 'bg-blue-500',
+    },
+    purple: {
+      surface: 'bg-purple-50 text-purple-700',
+      text: 'text-purple-600',
+      bar: 'bg-purple-500',
+    },
+    rose: {
+      surface: 'bg-rose-50 text-rose-700',
+      text: 'text-rose-600',
+      bar: 'bg-rose-500',
+    },
+    sky: {
+      surface: 'bg-sky-50 text-sky-700',
+      text: 'text-sky-600',
+      bar: 'bg-sky-500',
+    },
+    slate: {
+      surface: 'bg-slate-100 text-slate-700',
+      text: 'text-slate-600',
+      bar: 'bg-slate-500',
+    },
+  };
+
+  return tones[tone];
+}
+
 export default function DashboardPage() {
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -211,6 +260,9 @@ export default function DashboardPage() {
     verified: 0,
     rejected: 0,
   });
+  const [dashboardAnalytics, setDashboardAnalytics] = useState<DashboardAnalytics | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState('');
   const [verificationFilter, setVerificationFilter] = useState<VerificationFilter>('pending');
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState('');
@@ -252,6 +304,14 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   const isAdmin = user?.role === 'admin';
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    void loadDashboardOverviewAnalytics();
+  }, [user]);
 
   useEffect(() => {
     if (!user || !isAdmin) {
@@ -379,6 +439,37 @@ export default function DashboardPage() {
   const currentStatus = (user.profile?.verification_status ?? 'pending') as VerificationStatus;
   const currentStatusConfig = statusConfig[currentStatus];
   const StatusIcon = currentStatusConfig.icon;
+  const analyticsHeadline = dashboardAnalytics?.headline ?? {
+    eyebrow: isAdmin ? 'Control Tower' : isRestaurant ? 'Restaurant Flow' : 'Community Impact',
+    title: isAdmin
+      ? 'Pantau kesehatan platform dan percepat proses verifikasi pengguna.'
+      : isRestaurant
+        ? 'Lihat ritme distribusi makanan dan klaim yang sedang berjalan.'
+        : 'Pantau progres klaim dan dampak distribusi untuk komunitas Anda.',
+    description: isAdmin
+      ? 'Semua ringkasan utama akan tampil di sini setelah analytics selesai dimuat.'
+      : 'Semua ringkasan utama akan tampil di sini setelah analytics selesai dimuat.',
+  };
+  const analyticsStats = dashboardAnalytics?.stats ?? [];
+  const analyticsHighlights = dashboardAnalytics?.highlights ?? [];
+  const analyticsSeries = dashboardAnalytics?.chart.series ?? [];
+  const analyticsPeak = Math.max(...analyticsSeries.map((point) => point.value), 1);
+  const pendingVerificationUsers = verificationUsers
+    .filter((verificationUser) => verificationUser.profile?.verification_status === 'pending')
+    .slice(0, 3);
+
+  async function loadDashboardOverviewAnalytics() {
+    try {
+      setAnalyticsLoading(true);
+      setAnalyticsError('');
+      const data = await getDashboardAnalytics();
+      setDashboardAnalytics(data);
+    } catch {
+      setAnalyticsError('Gagal memuat analytics dashboard.');
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  }
 
   const loadAllVerifications = async () => {
     const data = await getVerificationUsers(verificationFilter);
@@ -535,7 +626,7 @@ export default function DashboardPage() {
       };
 
       await createFoodPost(payload);
-      await loadMyRestaurantFoodPosts();
+      await Promise.all([loadMyRestaurantFoodPosts(), loadDashboardOverviewAnalytics()]);
       setFoodPostFeedback('Food post berhasil dibuat dan sudah tampil di marketplace.');
       setShowCreateFoodPostForm(false);
       resetFoodPostForm();
@@ -571,7 +662,7 @@ export default function DashboardPage() {
       setFoodPostFeedback('');
       setFoodPostsError('');
       await updateFoodPost(foodPostId, { status });
-      await loadMyRestaurantFoodPosts();
+      await Promise.all([loadMyRestaurantFoodPosts(), loadDashboardOverviewAnalytics()]);
       setFoodPostFeedback(`Status food post berhasil diubah menjadi ${formatFoodPostStatus(status)}.`);
     } catch {
       setFoodPostsError('Status food post gagal diperbarui.');
@@ -589,7 +680,11 @@ export default function DashboardPage() {
       setIncomingClaimsError('');
       setIncomingClaimFeedback('');
       await updateClaimStatus(claimId, status);
-      await Promise.all([loadIncomingRestaurantClaims(), loadMyRestaurantFoodPosts()]);
+      await Promise.all([
+        loadIncomingRestaurantClaims(),
+        loadMyRestaurantFoodPosts(),
+        loadDashboardOverviewAnalytics(),
+      ]);
       setIncomingClaimFeedback(
         status === 'approved'
           ? 'Klaim berhasil disetujui.'
@@ -613,7 +708,7 @@ export default function DashboardPage() {
       setClaimsError('');
       setClaimsFeedback('');
       await updateClaimStatus(claimId, status);
-      await loadCommunityClaims();
+      await Promise.all([loadCommunityClaims(), loadDashboardOverviewAnalytics()]);
       setClaimsFeedback('Klaim berhasil dibatalkan dan stok dibuka kembali.');
     } catch {
       setClaimsError('Klaim gagal diperbarui.');
@@ -778,228 +873,370 @@ export default function DashboardPage() {
               )}
             </header>
 
-            {isAdmin ? (
-              <>
-                <div className="mb-8 rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                      <Users className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900">Pusat Verifikasi Pengguna</h3>
-                      <p className="mt-1 text-sm text-slate-500">
-                        Tinjau dokumen yang masuk, lalu setujui atau tolak akun secara langsung.
-                      </p>
+            {!isAdmin && currentStatus !== 'verified' && (
+              <div className={`mb-8 rounded-2xl border p-6 ${currentStatusConfig.wrapper}`}>
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${currentStatusConfig.iconWrapper}`}
+                  >
+                    <StatusIcon className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h3 className="mb-1 font-bold">{currentStatusConfig.title}</h3>
+                    <p className="mb-3 text-sm">{currentStatusConfig.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <span className="inline-flex items-center rounded-full bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                        {currentStatusConfig.badge}
+                      </span>
+                      <span className="inline-flex items-center rounded-full bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-wider">
+                        Dokumen: {user.profile?.document_url ? 'Tersedia' : 'Belum ada'}
+                      </span>
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Pending Review
-                      </span>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-                        <Clock className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">
-                      {verificationCounts.pending}
-                    </div>
-                    <div className="mt-2 text-xs font-bold text-amber-600">
-                      Perlu ditinjau admin
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Verified
-                      </span>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                        <ShieldCheck className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">
-                      {verificationCounts.verified}
-                    </div>
-                    <div className="mt-2 text-xs font-bold text-emerald-600">
-                      Akun aktif penuh
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Rejected
-                      </span>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-rose-50 text-rose-600">
-                        <XCircle className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">
-                      {verificationCounts.rejected}
-                    </div>
-                    <div className="mt-2 text-xs font-bold text-rose-600">
-                      Perlu pengajuan ulang
-                    </div>
-                  </div>
+            <div className="mb-8 overflow-hidden rounded-[28px] border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/80 to-sky-50 p-6 shadow-sm sm:p-8">
+              <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-3xl">
+                  <span className="inline-flex rounded-full bg-slate-950 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white">
+                    {analyticsHeadline.eyebrow}
+                  </span>
+                  <h2 className="mt-4 text-2xl font-bold text-slate-950 sm:text-3xl">
+                    {analyticsHeadline.title}
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+                    {analyticsHeadline.description}
+                  </p>
                 </div>
 
-                <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-slate-900">Antrean cepat</h3>
-                      <p className="text-sm text-slate-500">
-                        Pengguna dengan status pending yang perlu ditinjau lebih dulu.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => setActiveTab('verification')}
-                      className="text-sm font-bold text-emerald-600 hover:underline"
-                    >
-                      Buka panel verifikasi
-                    </button>
-                  </div>
-
-                  <div className="space-y-4">
-                    {verificationUsers
-                      .filter(
-                        (verificationUser) =>
-                          verificationUser.profile?.verification_status === 'pending'
-                      )
-                      .slice(0, 3)
-                      .map((verificationUser) => (
-                        <div
-                          key={verificationUser.id}
-                          className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:flex-row lg:items-center lg:justify-between"
-                        >
-                          <div>
-                            <p className="font-semibold text-slate-900">
-                              {verificationUser.profile?.name || verificationUser.name}
-                            </p>
-                            <p className="text-sm text-slate-500">
-                              {verificationUser.email} · {formatRole(verificationUser.role)}
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => void handleOpenDocument(verificationUser)}
-                            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
-                          >
-                            <Eye className="h-4 w-4" />
-                            Lihat Dokumen
-                          </button>
-                        </div>
-                      ))}
-
-                    {verificationUsers.filter(
-                      (verificationUser) =>
-                        verificationUser.profile?.verification_status === 'pending'
-                    ).length === 0 && (
-                      <div className="rounded-2xl bg-slate-50 p-8 text-center text-sm text-slate-500">
-                        Tidak ada antrean pending saat ini.
+                <div className="grid w-full max-w-xl gap-3 sm:grid-cols-2">
+                  {analyticsHighlights.length > 0 ? (
+                    analyticsHighlights.map((highlight) => (
+                      <div
+                        key={highlight.label}
+                        className="rounded-2xl border border-white/70 bg-white/80 p-4 backdrop-blur"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                          {highlight.label}
+                        </p>
+                        <p className="mt-3 text-3xl font-bold text-slate-950">
+                          {formatNumber(highlight.value)}
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {highlight.caption}
+                        </p>
                       </div>
-                    )}
-                  </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-slate-200 bg-white/70 p-4 text-sm text-slate-500 sm:col-span-2">
+                      Insight dampak akan tampil otomatis setelah aktivitas mulai tercatat.
+                    </div>
+                  )}
                 </div>
-              </>
+              </div>
+            </div>
+
+            {analyticsError && (
+              <div className="mb-8 flex flex-col gap-3 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-4 text-sm text-rose-700 sm:flex-row sm:items-center sm:justify-between">
+                <p>{analyticsError}</p>
+                <button
+                  onClick={() => void loadDashboardOverviewAnalytics()}
+                  className="rounded-xl bg-white px-4 py-2 font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-100"
+                >
+                  Coba lagi
+                </button>
+              </div>
+            )}
+
+            {analyticsLoading && !dashboardAnalytics ? (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, index) => (
+                    <div
+                      key={`analytics-skeleton-${index}`}
+                      className="h-36 animate-pulse rounded-3xl border border-slate-200 bg-white"
+                    ></div>
+                  ))}
+                </div>
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)]">
+                  <div className="h-96 animate-pulse rounded-3xl border border-slate-200 bg-white"></div>
+                  <div className="h-96 animate-pulse rounded-3xl border border-slate-200 bg-white"></div>
+                </div>
+              </div>
             ) : (
               <>
-                {currentStatus !== 'verified' && (
-                  <div className={`mb-8 rounded-2xl border p-6 ${currentStatusConfig.wrapper}`}>
-                    <div className="flex items-start gap-4">
-                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${currentStatusConfig.iconWrapper}`}>
-                        <StatusIcon className="h-6 w-6" />
-                      </div>
-                      <div>
-                        <h3 className="mb-1 font-bold">{currentStatusConfig.title}</h3>
-                        <p className="mb-3 text-sm">
-                          {currentStatusConfig.description}
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          <span className="inline-flex items-center rounded-full bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-wider">
-                            {currentStatusConfig.badge}
-                          </span>
-                          <span className="inline-flex items-center rounded-full bg-white/70 px-3 py-1 text-xs font-bold uppercase tracking-wider">
-                            Dokumen: {user.profile?.document_url ? 'Tersedia' : 'Belum ada'}
+                <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {analyticsStats.map((stat) => {
+                    const toneClasses = getToneClasses(stat.tone);
+
+                    return (
+                      <article
+                        key={stat.label}
+                        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-transform hover:-translate-y-0.5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                              {stat.label}
+                            </p>
+                            <p className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">
+                              {formatNumber(stat.value)}
+                            </p>
+                          </div>
+                          <span
+                            className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-xs font-bold ${toneClasses.surface}`}
+                          >
+                            {String(stat.label).slice(0, 2).toUpperCase()}
                           </span>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Total Donasi
-                      </span>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-                        <Utensils className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">0</div>
-                    <div className="mt-2 flex items-center gap-1 text-xs font-bold text-emerald-600">
-                      <CheckCircle2 className="h-3 w-3" />
-                      Sangat Baik!
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Klaim Aktif
-                      </span>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
-                        <ShoppingBag className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">0</div>
-                    <div className="mt-2 flex items-center gap-1 text-xs font-bold text-blue-600">
-                      <AlertCircle className="h-3 w-3" />
-                      Belum ada aktivitas
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-6">
-                    <div className="mb-4 flex items-center justify-between">
-                      <span className="text-sm font-medium uppercase tracking-wider text-slate-500">
-                        Dampak Sosial
-                      </span>
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-50 text-purple-600">
-                        <Users className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="text-3xl font-bold text-slate-900">0</div>
-                    <div className="mt-2 flex items-center gap-1 text-xs font-bold text-purple-600">
-                      <MapPin className="h-3 w-3" />
-                      Warga Terbantu
-                    </div>
-                  </div>
+                        <div className="mt-5">
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                            <div
+                              className={`h-full rounded-full ${toneClasses.bar}`}
+                              style={{
+                                width: `${Math.min(
+                                  100,
+                                  Math.max(18, stat.value === 0 ? 18 : stat.value * 12)
+                                )}%`,
+                              }}
+                            ></div>
+                          </div>
+                          <p className={`mt-3 text-sm font-medium ${toneClasses.text}`}>
+                            Ringkasan otomatis dari aktivitas {isAdmin ? 'platform' : 'Anda'} saat
+                            ini.
+                          </p>
+                        </div>
+                      </article>
+                    );
+                  })}
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                  <div className="flex items-center justify-between border-b border-slate-100 p-6">
-                    <h3 className="font-bold text-slate-900">Aktivitas Terakhir</h3>
-                    <button
-                      onClick={() => setActiveTab('history')}
-                      className="text-sm font-bold text-emerald-600 hover:underline"
-                    >
-                      Lihat Semua
-                    </button>
-                  </div>
-                  <div className="p-12 text-center">
-                    <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-slate-50">
-                      <History className="h-10 w-10 text-slate-300" />
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(320px,0.9fr)]">
+                  <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                          Analytics Trend
+                        </p>
+                        <h3 className="mt-2 text-xl font-bold text-slate-950">
+                          {dashboardAnalytics?.chart.title ?? 'Aktivitas 6 bulan terakhir'}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          Pola aktivitas utama ditampilkan ringkas agar mudah dipantau dari ponsel
+                          sampai layar desktop.
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => void loadDashboardOverviewAnalytics()}
+                        className="inline-flex items-center justify-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700"
+                      >
+                        Muat Ulang
+                      </button>
                     </div>
-                    <h4 className="mb-1 font-bold text-slate-900">Belum Ada Aktivitas</h4>
-                    <p className="mx-auto max-w-xs text-sm text-slate-500">
-                      Aktivitas terbaru Anda akan muncul di sini setelah Anda mulai{' '}
-                      {isRestaurant ? 'memposting' : 'mengklaim'} makanan.
-                    </p>
-                  </div>
+
+                    <div className="mt-8 overflow-x-auto pb-2">
+                      <div className="flex min-w-[340px] items-end gap-3 sm:gap-4">
+                        {analyticsSeries.length > 0 ? (
+                          analyticsSeries.map((point) => {
+                            const barHeight =
+                              point.value === 0
+                                ? 0
+                                : Math.max(12, (point.value / analyticsPeak) * 100);
+
+                            return (
+                              <div key={point.label} className="flex min-h-[240px] flex-1 flex-col">
+                                <div className="mb-3 text-center text-sm font-semibold text-slate-700">
+                                  {formatNumber(point.value)}
+                                </div>
+                                <div className="relative flex-1 rounded-[24px] bg-slate-100">
+                                  <div
+                                    className="absolute inset-x-0 bottom-0 rounded-[24px] bg-gradient-to-t from-emerald-500 via-emerald-400 to-sky-400 shadow-lg shadow-emerald-100"
+                                    style={{ height: `${barHeight}%` }}
+                                  ></div>
+                                </div>
+                                <div className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  {point.label}
+                                </div>
+                              </div>
+                            );
+                          })
+                        ) : (
+                          <div className="flex min-h-[240px] w-full items-center justify-center rounded-[24px] border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+                            Grafik akan aktif setelah ada histori data yang cukup untuk
+                            divisualisasikan.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 font-medium text-emerald-700">
+                        <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                        {dashboardAnalytics?.chart.series_label ?? 'Aktivitas'}
+                      </span>
+                      <span>Periode: 6 bulan terakhir</span>
+                    </div>
+                  </section>
+
+                  <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    {isAdmin ? (
+                      verificationLoading ? (
+                        <div className="space-y-4">
+                          <div className="h-6 w-40 animate-pulse rounded bg-slate-100"></div>
+                          <div className="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+                          <div className="h-24 animate-pulse rounded-2xl bg-slate-100"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex items-center justify-between gap-4">
+                            <div>
+                              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                Quick Queue
+                              </p>
+                              <h3 className="mt-2 text-xl font-bold text-slate-950">
+                                Antrean verifikasi prioritas
+                              </h3>
+                            </div>
+                            <button
+                              onClick={() => setActiveTab('verification')}
+                              className="text-sm font-semibold text-emerald-600 hover:underline"
+                            >
+                              Buka panel
+                            </button>
+                          </div>
+
+                          <div className="mt-4 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                              Pending: {formatNumber(verificationCounts.pending)}
+                            </span>
+                            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                              Verified: {formatNumber(verificationCounts.verified)}
+                            </span>
+                            <span className="rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                              Rejected: {formatNumber(verificationCounts.rejected)}
+                            </span>
+                          </div>
+
+                          <div className="mt-6 space-y-4">
+                            {pendingVerificationUsers.length > 0 ? (
+                              pendingVerificationUsers.map((verificationUser) => (
+                                <article
+                                  key={verificationUser.id}
+                                  className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                                >
+                                  <div className="flex flex-col gap-4">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div>
+                                        <p className="font-semibold text-slate-950">
+                                          {verificationUser.profile?.name || verificationUser.name}
+                                        </p>
+                                        <p className="mt-1 text-sm text-slate-500">
+                                          {verificationUser.email} | {formatRole(verificationUser.role)}
+                                        </p>
+                                      </div>
+                                      <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.15em] text-amber-700">
+                                        Pending
+                                      </span>
+                                    </div>
+                                    <button
+                                      onClick={() => void handleOpenDocument(verificationUser)}
+                                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-4 py-3 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:ring-emerald-200 hover:text-emerald-700"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                      Lihat dokumen
+                                    </button>
+                                  </div>
+                                </article>
+                              ))
+                            ) : (
+                              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                                Tidak ada antrean pending saat ini.
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between gap-4">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                              Quick Actions
+                            </p>
+                            <h3 className="mt-2 text-xl font-bold text-slate-950">
+                              {isRestaurant
+                                ? 'Prioritas restoran hari ini'
+                                : 'Prioritas komunitas hari ini'}
+                            </h3>
+                          </div>
+                          <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-500">
+                            Live
+                          </span>
+                        </div>
+
+                        <div className="mt-6 space-y-4">
+                          {analyticsHighlights.length > 0 ? (
+                            analyticsHighlights.map((highlight) => (
+                              <article
+                                key={highlight.label}
+                                className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
+                              >
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  {highlight.label}
+                                </p>
+                                <p className="mt-3 text-3xl font-bold text-slate-950">
+                                  {formatNumber(highlight.value)}
+                                </p>
+                                <p className="mt-2 text-sm leading-6 text-slate-500">
+                                  {highlight.caption}
+                                </p>
+                              </article>
+                            ))
+                          ) : (
+                            <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm text-slate-500">
+                              Insight tambahan akan muncul setelah Anda mulai beraktivitas.
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                          {isRestaurant ? (
+                            <>
+                              <button
+                                onClick={() => setActiveTab('posts')}
+                                className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                              >
+                                Kelola Food Post
+                              </button>
+                              <button
+                                onClick={() => setActiveTab('incoming-claims')}
+                                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
+                              >
+                                Lihat Klaim Masuk
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                href="/marketplace"
+                                className="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                              >
+                                Buka Marketplace
+                              </Link>
+                              <button
+                                onClick={() => setActiveTab('claims')}
+                                className="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:text-emerald-700"
+                              >
+                                Lihat Klaim Saya
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </section>
                 </div>
               </>
             )}
