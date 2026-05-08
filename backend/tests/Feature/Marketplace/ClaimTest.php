@@ -245,3 +245,109 @@ it('restaurant can reject incoming claim and reopen food post', function () {
         'status' => 'available',
     ]);
 });
+
+it('restaurant can complete approved claim and close food post', function () {
+    $restaurant = User::factory()->create([
+        'role' => 'restaurant',
+    ]);
+    $community = User::factory()->create([
+        'role' => 'community',
+    ]);
+
+    $restaurant->profile()->create([
+        'name' => 'Resto Complete',
+        'address' => 'Jl. Complete No. 1',
+        'verification_status' => 'verified',
+    ]);
+
+    $community->profile()->create([
+        'name' => 'Komunitas Complete',
+        'address' => 'Jl. Complete No. 2',
+        'verification_status' => 'verified',
+    ]);
+
+    $foodPost = FoodPost::create([
+        'user_id' => $restaurant->id,
+        'title' => 'Paket Lengkap',
+        'quantity' => 2,
+        'quantity_unit' => 'paket',
+        'pickup_address' => 'Jl. Complete No. 1',
+        'available_until' => now()->addHours(2),
+        'status' => 'claimed',
+    ]);
+
+    $claim = $community->claims()->create([
+        'food_post_id' => $foodPost->id,
+        'quantity' => 1,
+        'notes' => 'Sudah dijadwalkan pickup',
+        'status' => 'approved',
+    ]);
+
+    $response = $this->actingAs($restaurant)
+        ->patchJson("/api/claims/{$claim->id}", [
+            'status' => 'completed',
+        ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('claims', [
+        'id' => $claim->id,
+        'status' => 'completed',
+    ]);
+    $this->assertDatabaseHas('food_posts', [
+        'id' => $foodPost->id,
+        'status' => 'completed',
+    ]);
+});
+
+it('community can cancel its own pending claim and reopen food post', function () {
+    $restaurant = User::factory()->create([
+        'role' => 'restaurant',
+    ]);
+    $community = User::factory()->create([
+        'role' => 'community',
+    ]);
+
+    $restaurant->profile()->create([
+        'name' => 'Resto Cancel',
+        'address' => 'Jl. Cancel No. 1',
+        'verification_status' => 'verified',
+    ]);
+
+    $community->profile()->create([
+        'name' => 'Komunitas Cancel',
+        'address' => 'Jl. Cancel No. 2',
+        'verification_status' => 'verified',
+    ]);
+
+    $foodPost = FoodPost::create([
+        'user_id' => $restaurant->id,
+        'title' => 'Paket Batal',
+        'quantity' => 2,
+        'quantity_unit' => 'paket',
+        'pickup_address' => 'Jl. Cancel No. 1',
+        'available_until' => now()->addHours(2),
+        'status' => 'claimed',
+    ]);
+
+    $claim = $community->claims()->create([
+        'food_post_id' => $foodPost->id,
+        'quantity' => 1,
+        'notes' => 'Mungkin batal',
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($community)
+        ->patchJson("/api/claims/{$claim->id}", [
+            'status' => 'cancelled',
+        ]);
+
+    $response->assertOk();
+    $this->assertDatabaseHas('claims', [
+        'id' => $claim->id,
+        'status' => 'cancelled',
+    ]);
+    $this->assertDatabaseHas('food_posts', [
+        'id' => $foodPost->id,
+        'status' => 'available',
+    ]);
+});

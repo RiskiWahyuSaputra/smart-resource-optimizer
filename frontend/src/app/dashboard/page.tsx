@@ -226,6 +226,8 @@ export default function DashboardPage() {
   const [myClaims, setMyClaims] = useState<MarketplaceClaim[]>([]);
   const [claimsLoading, setClaimsLoading] = useState(false);
   const [claimsError, setClaimsError] = useState('');
+  const [claimsFeedback, setClaimsFeedback] = useState('');
+  const [claimActionId, setClaimActionId] = useState<number | null>(null);
   const [incomingClaims, setIncomingClaims] = useState<MarketplaceClaim[]>([]);
   const [incomingClaimsLoading, setIncomingClaimsLoading] = useState(false);
   const [incomingClaimsError, setIncomingClaimsError] = useState('');
@@ -466,6 +468,19 @@ export default function DashboardPage() {
     }
   };
 
+  const loadCommunityClaims = async () => {
+    try {
+      setClaimsLoading(true);
+      setClaimsError('');
+      const data = await getMyClaims();
+      setMyClaims(data.claims ?? []);
+    } catch {
+      setClaimsError('Gagal memuat daftar klaim Anda.');
+    } finally {
+      setClaimsLoading(false);
+    }
+  };
+
   const handleFoodPostFormChange = (
     field: keyof FoodPostFormState,
     value: string
@@ -567,7 +582,7 @@ export default function DashboardPage() {
 
   const handleIncomingClaimStatus = async (
     claimId: number,
-    status: 'approved' | 'rejected'
+    status: 'approved' | 'rejected' | 'completed'
   ) => {
     try {
       setIncomingClaimActionId(claimId);
@@ -576,12 +591,34 @@ export default function DashboardPage() {
       await updateClaimStatus(claimId, status);
       await Promise.all([loadIncomingRestaurantClaims(), loadMyRestaurantFoodPosts()]);
       setIncomingClaimFeedback(
-        `Klaim berhasil ${status === 'approved' ? 'disetujui' : 'ditolak'}.`
+        status === 'approved'
+          ? 'Klaim berhasil disetujui.'
+          : status === 'rejected'
+          ? 'Klaim berhasil ditolak.'
+          : 'Pickup berhasil ditandai selesai.'
       );
     } catch {
       setIncomingClaimsError('Klaim gagal diproses.');
     } finally {
       setIncomingClaimActionId(null);
+    }
+  };
+
+  const handleCommunityClaimStatus = async (
+    claimId: number,
+    status: 'cancelled'
+  ) => {
+    try {
+      setClaimActionId(claimId);
+      setClaimsError('');
+      setClaimsFeedback('');
+      await updateClaimStatus(claimId, status);
+      await loadCommunityClaims();
+      setClaimsFeedback('Klaim berhasil dibatalkan dan stok dibuka kembali.');
+    } catch {
+      setClaimsError('Klaim gagal diperbarui.');
+    } finally {
+      setClaimActionId(null);
     }
   };
 
@@ -1573,6 +1610,15 @@ export default function DashboardPage() {
                         >
                           Tolak Klaim
                         </button>
+                        <button
+                          onClick={() => void handleIncomingClaimStatus(claim.id, 'completed')}
+                          disabled={
+                            incomingClaimActionId === claim.id || claim.status !== 'approved'
+                          }
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Tandai Pickup Selesai
+                        </button>
                       </div>
                     </div>
                   </article>
@@ -1592,6 +1638,12 @@ export default function DashboardPage() {
             {claimsError && (
               <div className="mb-6 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {claimsError}
+              </div>
+            )}
+
+            {claimsFeedback && (
+              <div className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {claimsFeedback}
               </div>
             )}
 
@@ -1705,6 +1757,15 @@ export default function DashboardPage() {
                               {claim.food_post.user.profile?.name || claim.food_post.user.name}
                             </span>
                           </div>
+                        </div>
+                        <div className="mt-4">
+                          <button
+                            onClick={() => void handleCommunityClaimStatus(claim.id, 'cancelled')}
+                            disabled={claimActionId === claim.id || claim.status !== 'pending'}
+                            className="w-full rounded-xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {claimActionId === claim.id ? 'Memproses...' : 'Batalkan Klaim'}
+                          </button>
                         </div>
                       </div>
                     </div>
