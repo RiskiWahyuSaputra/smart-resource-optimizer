@@ -24,6 +24,7 @@ class RegisterUserAction
                 'lat' => $data['lat'] ?? null,
                 'long' => $data['long'] ?? null,
                 'verification_status' => 'pending',
+                'document_url' => $data['document_url'] ?? null,
             ]);
 
             return $user;

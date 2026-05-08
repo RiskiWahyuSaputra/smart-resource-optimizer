@@ -14,15 +14,21 @@ class AuthController extends Controller
 {
     public function register(Request $request, RegisterUserAction $action)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'role' => ['required', 'string', 'in:restaurant,community'],
             'address' => ['required', 'string'],
+            'verification_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
 
-        $user = $action->execute($request->all());
+        if ($request->hasFile('verification_document')) {
+            $validated['document_url'] = $request->file('verification_document')
+                ->store('verification-documents', 'public');
+        }
+
+        $user = $action->execute($validated);
 
         $token = $user->createToken('api')->plainTextToken;
 

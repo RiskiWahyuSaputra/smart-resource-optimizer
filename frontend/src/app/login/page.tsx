@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { Suspense, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { KeyRound, Mail } from 'lucide-react';
+import AuthShell from '@/components/auth/AuthShell';
 import { useAuth } from '@/context/AuthContext';
 import { login as loginApi } from '@/services/authService';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 
 function LoginContent() {
   const [email, setEmail] = useState('');
@@ -26,9 +27,9 @@ function LoginContent() {
     } catch (err: unknown) {
       if (err && typeof err === 'object' && 'response' in err) {
         const axiosError = err as { response: { data: { message?: string } } };
-        setError(axiosError.response?.data?.message || 'Failed to login');
+        setError(axiosError.response?.data?.message || 'Gagal masuk ke akun');
       } else {
-        setError('Failed to login');
+        setError('Gagal masuk ke akun');
       }
     } finally {
       setLoading(false);
@@ -36,88 +37,92 @@ function LoginContent() {
   };
 
   return (
-    <div className="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-          Sign in to your account
-        </h2>
-      </div>
+    <AuthShell
+      badge="Smart Resource Optimizer"
+      eyebrow="Masuk"
+      title="Masuk ke akun Anda"
+      description="Lanjutkan pengelolaan donasi makanan, cek status verifikasi, dan pantau aktivitas terbaru tanpa tampilan yang gelap."
+      sideTitle="Satu pintu untuk restoran dan komunitas bergerak lebih cepat."
+      sideDescription="Halaman masuk kini dibuat senada dengan dashboard utama: terang, bersih, dan fokus pada alur kerja harian Anda."
+      ctaText="Belum punya akun?"
+      ctaLabel="Daftar sekarang"
+      ctaHref="/register"
+    >
+      <form className="space-y-5" onSubmit={handleSubmit}>
+        {registered && !error && (
+          <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            Registrasi berhasil. Silakan masuk menggunakan akun Anda.
+          </div>
+        )}
 
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <form className="space-y-6" onSubmit={handleSubmit}>
-          {registered && !error && (
-            <div className="bg-green-50 text-green-700 p-3 rounded-md text-sm">
-              Registration successful! Please sign in.
-            </div>
-          )}
-          {error && (
-            <div className="bg-red-50 text-red-500 p-3 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">
-              Email address
+        {error && (
+          <div className="rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
+            Email
+          </label>
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition-all focus-within:border-emerald-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-100">
+            <Mail className="h-5 w-5 text-emerald-600" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="nama@contoh.com"
+              className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-3">
+            <label htmlFor="password" className="block text-sm font-semibold text-slate-700">
+              Password
             </label>
-            <div className="mt-2">
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              />
-            </div>
+            <span className="text-xs font-medium text-slate-400">Minimal 8 karakter</span>
           </div>
-
-          <div>
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="block text-sm font-medium leading-6 text-gray-900">
-                Password
-              </label>
-            </div>
-            <div className="mt-2">
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-              />
-            </div>
+          <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 transition-all focus-within:border-emerald-300 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-100">
+            <KeyRound className="h-5 w-5 text-emerald-600" />
+            <input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Masukkan password Anda"
+              className="w-full bg-transparent text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            />
           </div>
+        </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
-            >
-              {loading ? 'Signing in...' : 'Sign in'}
-            </button>
-          </div>
-        </form>
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-4 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-100 transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? 'Memproses...' : 'Masuk ke Dashboard'}
+        </button>
 
-        <p className="mt-10 text-center text-sm text-gray-500">
-          Not a member?{' '}
-          <Link href="/register" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
-            Register now
-          </Link>
+        <p className="text-center text-sm text-slate-500">
+          Dengan masuk, Anda siap melanjutkan distribusi yang lebih tertata bersama SRO.
         </p>
-      </div>
-    </div>
+      </form>
+    </AuthShell>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="min-h-[calc(100vh-64px)] bg-slate-50" />}>
       <LoginContent />
     </Suspense>
   );

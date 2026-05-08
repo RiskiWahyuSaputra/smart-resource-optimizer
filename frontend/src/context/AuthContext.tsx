@@ -5,12 +5,20 @@ import { useRouter } from 'next/navigation';
 import axios from '@/lib/axios';
 import Cookies from 'js-cookie';
 
+interface UserProfile {
+  name?: string;
+  address?: string;
+  verification_status?: string;
+  document_url?: string | null;
+}
+
 interface User {
   id: number;
   name: string;
   email: string;
   role: string;
   verified: boolean;
+  profile?: UserProfile | null;
 }
 
 interface AuthContextType {
@@ -31,19 +39,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('token') || Cookies.get('token');
-    const storedUser = localStorage.getItem('user');
+    const restoreAuth = async () => {
+      const storedToken = localStorage.getItem('token') || Cookies.get('token');
+      const storedUser = localStorage.getItem('user');
 
-    if (storedToken && storedUser) {
+      if (!storedToken) {
+        setLoading(false);
+        return;
+      }
+
       setToken(storedToken);
-      setUser(JSON.parse(storedUser));
-      
-      // Sync cookie if only in localStorage
+
       if (!Cookies.get('token')) {
         Cookies.set('token', storedToken, { expires: 7, sameSite: 'lax' });
       }
-    }
-    setLoading(false);
+
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+          setLoading(false);
+          return;
+        } catch {
+          localStorage.removeItem('user');
+        }
+      }
+
+      try {
+        const response = await axios.get('/user');
+        setUser(response.data);
+        localStorage.setItem('user', JSON.stringify(response.data));
+      } catch {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        Cookies.remove('token');
+        setToken(null);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void restoreAuth();
   }, []);
 
   const login = (newToken: string, newUser: User) => {
