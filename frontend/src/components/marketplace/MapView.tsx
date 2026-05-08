@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -21,6 +21,7 @@ interface FoodPost {
   restaurantName: string;
   lat: number;
   lng: number;
+  pickupAddress?: string;
 }
 
 interface MapViewProps {
@@ -52,6 +53,9 @@ const MapView: React.FC<MapViewProps> = ({
               <div className="p-1">
                 <h4 className="font-bold text-slate-900">{post.title}</h4>
                 <p className="text-sm text-slate-600">{post.restaurantName}</p>
+                {post.pickupAddress && (
+                  <p className="mt-1 text-xs text-slate-500">{post.pickupAddress}</p>
+                )}
               </div>
             </Popup>
           </Marker>

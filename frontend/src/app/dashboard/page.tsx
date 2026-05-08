@@ -19,6 +19,7 @@ import {
   ShoppingBag,
   Utensils,
   Users,
+  X,
   XCircle,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -49,6 +50,12 @@ type VerificationCounts = {
   pending: number;
   verified: number;
   rejected: number;
+};
+
+type DocumentPreview = {
+  fileName: string;
+  url: string;
+  userName: string;
 };
 
 const statusConfig: Record<
@@ -131,6 +138,7 @@ export default function DashboardPage() {
   const [verificationLoading, setVerificationLoading] = useState(false);
   const [verificationError, setVerificationError] = useState('');
   const [actionUserId, setActionUserId] = useState<number | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<DocumentPreview | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -213,13 +221,34 @@ export default function DashboardPage() {
     );
   };
 
-  const handleOpenDocument = async (userId: number) => {
+  const closeDocumentPreview = () => {
+    setDocumentPreview((currentPreview) => {
+      if (currentPreview) {
+        window.URL.revokeObjectURL(currentPreview.url);
+      }
+
+      return null;
+    });
+  };
+
+  const handleOpenDocument = async (verificationUser: VerificationUser) => {
     try {
-      setActionUserId(userId);
-      const blob = await getVerificationDocument(userId);
+      setActionUserId(verificationUser.id);
+      const blob = await getVerificationDocument(verificationUser.id);
       const url = window.URL.createObjectURL(blob);
-      window.open(url, '_blank', 'noopener,noreferrer');
-      window.setTimeout(() => window.URL.revokeObjectURL(url), 60000);
+
+      setDocumentPreview((currentPreview) => {
+        if (currentPreview) {
+          window.URL.revokeObjectURL(currentPreview.url);
+        }
+
+        return {
+          fileName:
+            verificationUser.profile?.document_url?.split('/').pop() || 'dokumen-verifikasi',
+          url,
+          userName: verificationUser.profile?.name || verificationUser.name,
+        };
+      });
     } catch {
       setVerificationError('Dokumen gagal dibuka. Pastikan file sudah tersedia.');
     } finally {
@@ -488,7 +517,7 @@ export default function DashboardPage() {
                             </p>
                           </div>
                           <button
-                            onClick={() => void handleOpenDocument(verificationUser.id)}
+                            onClick={() => void handleOpenDocument(verificationUser)}
                             className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
                           >
                             <Eye className="h-4 w-4" />
@@ -716,7 +745,7 @@ export default function DashboardPage() {
 
                         <div className="flex w-full max-w-sm flex-col gap-3">
                           <button
-                            onClick={() => void handleOpenDocument(verificationUser.id)}
+                            onClick={() => void handleOpenDocument(verificationUser)}
                             disabled={
                               actionUserId === verificationUser.id ||
                               !verificationUser.profile?.document_url
@@ -914,6 +943,60 @@ export default function DashboardPage() {
           </div>
         )}
       </main>
+
+      {documentPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+          <div className="flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600">
+                  Preview Dokumen
+                </p>
+                <h3 className="mt-2 text-xl font-bold text-slate-950">
+                  {documentPreview.userName}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">{documentPreview.fileName}</p>
+              </div>
+              <button
+                onClick={closeDocumentPreview}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 bg-slate-100 p-4">
+              <iframe
+                src={documentPreview.url}
+                title={`Dokumen ${documentPreview.userName}`}
+                className="h-full w-full rounded-2xl border border-slate-200 bg-white"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+              <p className="text-sm text-slate-500">
+                Dokumen ditampilkan dalam popup agar proses verifikasi tetap di halaman ini.
+              </p>
+              <div className="flex items-center gap-3">
+                <a
+                  href={documentPreview.url}
+                  download={documentPreview.fileName}
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-emerald-200 hover:text-emerald-700"
+                >
+                  <FileText className="h-4 w-4" />
+                  Unduh
+                </a>
+                <button
+                  onClick={closeDocumentPreview}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

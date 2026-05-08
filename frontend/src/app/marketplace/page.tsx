@@ -1,11 +1,16 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useDeferredValue, useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { Filter, List, Map as MapIcon, Search } from 'lucide-react';
 import FoodCard from '@/components/marketplace/FoodCard';
-import { Search, Filter, Map as MapIcon, List } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import {
+  claimFoodPost,
+  getFoodPosts,
+  type MarketplaceFoodPost,
+} from '@/services/marketplaceService';
 
-// Dynamically import MapView to avoid SSR issues with Leaflet
 const MapView = dynamic(() => import('@/components/marketplace/MapView'), {
   ssr: false,
   loading: () => (
@@ -15,89 +20,146 @@ const MapView = dynamic(() => import('@/components/marketplace/MapView'), {
   ),
 });
 
-const FOOD_POSTS = [
-  {
-    id: 1,
-    title: "Sisa Makanan Pesta (Nasi Box)",
-    restaurantName: "Catering Berkah",
-    quantity: "15 Box",
-    distance: "0.8 km",
-    expiryTime: "2 jam",
-    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&h=300&auto=format&fit=crop",
-    lat: -6.2088,
-    lng: 106.8456
-  },
-  {
-    id: 2,
-    title: "Roti Berlebih (Berbagai Jenis)",
-    restaurantName: "BreadTalk Senayan",
-    quantity: "20 Pcs",
-    distance: "1.5 km",
-    expiryTime: "4 jam",
-    image: "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=400&h=300&auto=format&fit=crop",
-    lat: -6.2146,
-    lng: 106.8451
-  },
-  {
-    id: 3,
-    title: "Sayuran Segar Sisa Display",
-    restaurantName: "Super Indo",
-    quantity: "5 kg",
-    distance: "2.1 km",
-    expiryTime: "6 jam",
-    image: "https://images.unsplash.com/photo-1540420773420-3366772f4999?q=80&w=400&h=300&auto=format&fit=crop",
-    lat: -6.2000,
-    lng: 106.8200
-  },
-  {
-    id: 4,
-    title: "Donat & Pastry",
-    restaurantName: "J.CO Donuts",
-    quantity: "12 Pcs",
-    distance: "3.2 km",
-    expiryTime: "1 jam",
-    image: "https://images.unsplash.com/photo-1551024601-bec78aea704b?q=80&w=400&h=300&auto=format&fit=crop",
-    lat: -6.2200,
-    lng: 106.8100
-  },
-  {
-    id: 5,
-    title: "Nasi Goreng Spesial",
-    restaurantName: "Warung Pak Kumis",
-    quantity: "5 Porsi",
-    distance: "0.5 km",
-    expiryTime: "1 jam",
-    image: "https://images.unsplash.com/photo-1512058560566-427a1bd565c8?q=80&w=400&h=300&auto=format&fit=crop",
-    lat: -6.2050,
-    lng: 106.8500
+type ViewMode = 'split' | 'map' | 'list';
+
+function formatRemainingTime(value: string) {
+  const target = new Date(value).getTime();
+  const diffInMs = target - Date.now();
+
+  if (diffInMs <= 0) {
+    return 'Sudah berakhir';
   }
-];
+
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInMinutes = Math.floor((diffInMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (diffInHours > 0) {
+    return `${diffInHours} jam ${diffInMinutes} menit`;
+  }
+
+  return `${Math.max(diffInMinutes, 1)} menit`;
+}
+
+function normalizeCoordinate(value: number | string | null | undefined, fallback: number) {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  return fallback;
+}
 
 export default function MarketplacePage() {
-  const [viewMode, setViewMode] = React.useState<'split' | 'map' | 'list'>('split');
+  const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [foodPosts, setFoodPosts] = useState<MarketplaceFoodPost[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const { user } = useAuth();
+  const deferredSearchTerm = useDeferredValue(searchTerm);
+
+  const loadFoodPosts = async (search?: string) => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const data = await getFoodPosts(search);
+      setFoodPosts(data.food_posts ?? []);
+    } catch {
+      setError('Gagal memuat stok makanan. Coba lagi beberapa saat.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadFoodPosts(deferredSearchTerm);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [deferredSearchTerm]);
+
+  const handleClaim = async (foodPostId: number) => {
+    try {
+      setClaimingId(foodPostId);
+      setFeedbackMessage('');
+      await claimFoodPost(foodPostId, 1, 'Diklaim dari marketplace');
+      setFeedbackMessage('Klaim berhasil dibuat. Restoran dapat menindaklanjuti pengambilan.');
+      await loadFoodPosts(deferredSearchTerm);
+    } catch (claimError: unknown) {
+      if (
+        claimError &&
+        typeof claimError === 'object' &&
+        'response' in claimError &&
+        claimError.response &&
+        typeof claimError.response === 'object' &&
+        'data' in claimError.response
+      ) {
+        const responseError = claimError as {
+          response?: { data?: { message?: string } };
+        };
+        setFeedbackMessage(
+          responseError.response?.data?.message || 'Klaim gagal diproses.'
+        );
+      } else {
+        setFeedbackMessage('Klaim gagal diproses.');
+      }
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  const mappedPosts = foodPosts.map((post) => ({
+    id: post.id,
+    title: post.title,
+    description: post.description || '',
+    restaurantName: post.user.profile?.name || post.user.name,
+    quantity: `${post.quantity} ${post.quantity_unit}`,
+    location: post.pickup_address,
+    expiryTime: formatRemainingTime(post.available_until),
+    image: post.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&h=300&auto=format&fit=crop',
+    lat: normalizeCoordinate(post.lat, -6.2088),
+    lng: normalizeCoordinate(post.long, 106.8456),
+    pickupAddress: post.pickup_address,
+  }));
+
+  const mapCenter =
+    mappedPosts.length > 0
+      ? ([mappedPosts[0].lat, mappedPosts[0].lng] as [number, number])
+      : ([-6.2088, 106.8456] as [number, number]);
+
+  const canClaim = user?.role === 'community' || user?.role === 'admin';
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex flex-col">
-      {/* Header / Filters */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 sm:px-6">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row gap-4 items-center justify-between">
+        <div className="max-w-7xl mx-auto flex flex-col gap-4 sm:flex-row items-center justify-between">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Cari makanan atau restoran..." 
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Cari makanan atau restoran..."
               className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all text-sm"
             />
           </div>
-          
+
           <div className="flex items-center gap-2 w-full sm:w-auto">
             <button className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
               <Filter className="w-4 h-4 text-emerald-600" />
-              Filter
+              Data Live
             </button>
-            
+
             <div className="hidden sm:flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-              <button 
+              <button
                 onClick={() => setViewMode('split')}
                 className={`p-1.5 rounded-md transition-all ${viewMode === 'split' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
                 title="Split View"
@@ -107,14 +169,14 @@ export default function MarketplacePage() {
                   <MapIcon className="w-4 h-4" />
                 </div>
               </button>
-              <button 
+              <button
                 onClick={() => setViewMode('list')}
                 className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
                 title="List View"
               >
                 <List className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 onClick={() => setViewMode('map')}
                 className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-white shadow-sm text-emerald-600' : 'text-slate-500 hover:text-slate-700'}`}
                 title="Map View"
@@ -126,41 +188,87 @@ export default function MarketplacePage() {
         </div>
       </div>
 
-      {/* Main Content */}
+      <div className="max-w-7xl mx-auto w-full px-4 pt-6 sm:px-6">
+        {feedbackMessage && (
+          <div className="mb-4 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {feedbackMessage}
+          </div>
+        )}
+
+        {error && (
+          <div className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
+        )}
+      </div>
+
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden max-w-[2000px] mx-auto w-full">
-        {/* Left Side: Food List */}
-        <div className={`
-          flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar
-          ${viewMode === 'map' ? 'hidden' : 'block'}
-          ${viewMode === 'split' ? 'md:w-1/2 lg:w-[450px] xl:w-[500px]' : 'w-full'}
-        `}>
+        <div
+          className={`
+            flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar
+            ${viewMode === 'map' ? 'hidden' : 'block'}
+            ${viewMode === 'split' ? 'md:w-1/2 lg:w-[480px] xl:w-[540px]' : 'w-full'}
+          `}
+        >
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-slate-900">Pasar Makanan</h1>
-            <p className="text-slate-500 text-sm">Temukan makanan berlebih berkualitas di sekitarmu</p>
+            <p className="text-slate-500 text-sm">
+              Temukan stok pangan berlebih yang tersedia untuk diselamatkan hari ini.
+            </p>
           </div>
 
-          <div className={`grid gap-6 ${viewMode === 'list' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-            {FOOD_POSTS.map((food) => (
-              <FoodCard key={food.id} food={food} />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid gap-6 grid-cols-1">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-80 rounded-2xl border border-slate-200 bg-white animate-pulse"
+                />
+              ))}
+            </div>
+          ) : mappedPosts.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center">
+              <h3 className="text-lg font-bold text-slate-900">Belum ada stok tersedia</h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Coba kata kunci lain atau tambahkan food post baru dari dashboard restoran.
+              </p>
+            </div>
+          ) : (
+            <div className={`grid gap-6 ${viewMode === 'list' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
+              {mappedPosts.map((food) => (
+                <FoodCard
+                  key={food.id}
+                  food={food}
+                  actionLabel={
+                    canClaim ? (claimingId === food.id ? 'Memproses...' : 'Klaim Sekarang') : 'Login untuk Klaim'
+                  }
+                  actionDisabled={!canClaim || claimingId === food.id}
+                  onAction={() => {
+                    if (canClaim) {
+                      void handleClaim(food.id);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Right Side: Map */}
-        <div className={`
-          flex-1 p-4 sm:p-6 md:pl-0 h-[500px] md:h-auto
-          ${viewMode === 'list' ? 'hidden' : 'block'}
-          ${viewMode === 'split' ? 'md:w-1/2' : 'w-full'}
-          sticky top-[73px]
-        `}>
-          <MapView posts={FOOD_POSTS} />
+        <div
+          className={`
+            flex-1 p-4 sm:p-6 md:pl-0 h-[500px] md:h-auto
+            ${viewMode === 'list' ? 'hidden' : 'block'}
+            ${viewMode === 'split' ? 'md:w-1/2' : 'w-full'}
+            sticky top-[73px]
+          `}
+        >
+          <MapView posts={mappedPosts} center={mapCenter} />
         </div>
       </div>
-      
-      {/* Mobile Toggle View */}
+
       <div className="sm:hidden fixed bottom-6 left-1/2 -translate-x-1/2 z-20">
         <div className="bg-slate-900/90 backdrop-blur-md text-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-4">
-          <button 
+          <button
             onClick={() => setViewMode('list')}
             className={`flex items-center gap-2 text-sm font-semibold ${viewMode === 'list' ? 'text-emerald-400' : 'text-white'}`}
           >
@@ -168,7 +276,7 @@ export default function MarketplacePage() {
             Daftar
           </button>
           <div className="w-px h-4 bg-slate-700"></div>
-          <button 
+          <button
             onClick={() => setViewMode('map')}
             className={`flex items-center gap-2 text-sm font-semibold ${viewMode === 'map' ? 'text-emerald-400' : 'text-white'}`}
           >
