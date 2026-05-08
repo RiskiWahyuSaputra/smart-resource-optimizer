@@ -45,6 +45,15 @@ export type MarketplaceClaim = {
   created_at?: string;
   updated_at?: string;
   food_post: MarketplaceFoodPost;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+    profile?: {
+      name?: string;
+      address?: string;
+    } | null;
+  };
 };
 
 export const getFoodPosts = async (search?: string) => {
@@ -79,6 +88,19 @@ export const updateFoodPost = async (
 export const getMyClaims = async () => {
   const response = await axios.get('/claims');
   return response.data as { claims: MarketplaceClaim[] };
+};
+
+export const getIncomingClaims = async () => {
+  const response = await axios.get('/incoming-claims');
+  return response.data as { claims: MarketplaceClaim[] };
+};
+
+export const updateClaimStatus = async (
+  claimId: number,
+  status: MarketplaceClaim['status']
+) => {
+  const response = await axios.patch(`/claims/${claimId}`, { status });
+  return response.data as { claim: MarketplaceClaim };
 };
 
 export const claimFoodPost = async (foodPostId: number, quantity = 1, notes?: string) => {

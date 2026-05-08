@@ -21,6 +21,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/food-posts', [FoodPostController::class, 'store']);
     Route::patch('/food-posts/{foodPost}', [FoodPostController::class, 'update']);
     Route::get('/claims', [ClaimController::class, 'index']);
+    Route::get('/incoming-claims', [ClaimController::class, 'incoming']);
+    Route::patch('/claims/{claim}', [ClaimController::class, 'update']);
     Route::post('/food-posts/{foodPost}/claims', [ClaimController::class, 'store']);
 });
 
