@@ -20,7 +20,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
+
+    public function isRestaurant(): bool { return $this->role === 'restaurant'; }
+    public function isCommunity(): bool { return $this->role === 'community'; }
+    public function isAdmin(): bool { return $this->role === 'admin'; }
 
     /**
      * The attributes that should be hidden for serialization.
