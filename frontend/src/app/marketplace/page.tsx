@@ -10,6 +10,7 @@ import {
   getFoodPosts,
   type MarketplaceFoodPost,
 } from '@/services/marketplaceService';
+import { useCart } from '@/context/CartContext';
 
 const MapView = dynamic(() => import('@/components/marketplace/MapView'), {
   ssr: false,
@@ -64,6 +65,7 @@ export default function MarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const { user } = useAuth();
+  const { addItem, items: cartItems } = useCart();
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const loadFoodPosts = async (search?: string) => {
@@ -89,34 +91,15 @@ export default function MarketplacePage() {
     return () => window.clearTimeout(timeoutId);
   }, [deferredSearchTerm]);
 
-  const handleClaim = async (foodPostId: number) => {
-    try {
-      setClaimingId(foodPostId);
-      setFeedbackMessage('');
-      await claimFoodPost(foodPostId, 1, 'Diklaim dari marketplace');
-      setFeedbackMessage('Klaim berhasil dibuat. Restoran dapat menindaklanjuti pengambilan.');
-      await loadFoodPosts(deferredSearchTerm);
-    } catch (claimError: unknown) {
-      if (
-        claimError &&
-        typeof claimError === 'object' &&
-        'response' in claimError &&
-        claimError.response &&
-        typeof claimError.response === 'object' &&
-        'data' in claimError.response
-      ) {
-        const responseError = claimError as {
-          response?: { data?: { message?: string } };
-        };
-        setFeedbackMessage(
-          responseError.response?.data?.message || 'Klaim gagal diproses.'
-        );
-      } else {
-        setFeedbackMessage('Klaim gagal diproses.');
-      }
-    } finally {
-      setClaimingId(null);
+  const handleAddToCart = (food: (typeof mappedPosts)[0]) => {
+    if (!user) {
+      setError('Silakan login terlebih dahulu untuk mengklaim makanan.');
+      return;
     }
+    addItem(food);
+    setFeedbackMessage(`"${food.title}" telah ditambahkan ke keranjang klaim.`);
+    // Auto clear feedback after 3 seconds
+    setTimeout(() => setFeedbackMessage(''), 3000);
   };
 
   const mappedPosts = foodPosts.map((post) => ({
@@ -245,21 +228,24 @@ export default function MarketplacePage() {
           ) : (
             <div className="flex flex-col gap-8">
               <div className={`grid gap-4 sm:gap-6 ${viewMode === 'list' ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}>
-                {paginatedPosts.map((food) => (
-                  <FoodCard
-                    key={food.id}
-                    food={food}
-                    actionLabel={
-                      canClaim ? (claimingId === food.id ? 'Memproses...' : 'Klaim Sekarang') : 'Login untuk Klaim'
-                    }
-                    actionDisabled={!canClaim || claimingId === food.id}
-                    onAction={() => {
-                      if (canClaim) {
-                        void handleClaim(food.id);
+                {paginatedPosts.map((food) => {
+                  const isInCart = cartItems.some(item => item.id === food.id);
+                  return (
+                    <FoodCard
+                      key={food.id}
+                      food={food}
+                      actionLabel={
+                        isInCart ? 'Sudah di Keranjang' : (user ? 'Tambah ke Keranjang' : 'Login untuk Klaim')
                       }
-                    }}
-                  />
-                ))}
+                      actionDisabled={isInCart || !user}
+                      onAction={() => {
+                        if (user) {
+                          handleAddToCart(food);
+                        }
+                      }}
+                    />
+                  );
+                })}
               </div>
 
               {totalPages > 1 && (

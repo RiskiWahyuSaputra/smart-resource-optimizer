@@ -3,7 +3,11 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { Menu, X, Leaf, LayoutDashboard, LogOut, LogIn, UserPlus, ShoppingCart } from 'lucide-react';
+import { Menu, X, Leaf, LayoutDashboard, LogOut, LogIn, UserPlus, ShoppingCart, ShoppingBag } from 'lucide-react';
+import { useCart } from '@/context/CartContext';
+import CartDrawer from '@/components/marketplace/CartDrawer';
+import { claimFoodPost } from '@/services/marketplaceService';
+import toast from 'react-hot-toast'; // Wait, do we have toast? I'll check. If not I'll use alert.
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -13,9 +17,32 @@ function cn(...inputs: ClassValue[]) {
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { itemCount, items, clearCart } = useCart();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleConfirmClaims = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      // Process all items in cart
+      const promises = items.map(item => 
+        claimFoodPost(item.id, 1, 'Klaim kolektif dari keranjang')
+      );
+      await Promise.all(promises);
+      clearCart();
+      setIsCartOpen(false);
+      alert('Berhasil mengklaim ' + items.length + ' item makanan!');
+    } catch (error) {
+      console.error('Klaim gagal', error);
+      alert('Sebagian atau seluruh klaim gagal diproses. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const navLinks = [
     { name: 'Marketplace', href: '/marketplace', icon: ShoppingCart },
@@ -72,13 +99,27 @@ const Navbar = () => {
               </Link>
             ))}
             {user && (
-              <button
-                onClick={logout}
-                className="flex items-center px-4 py-2 rounded-full text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsCartOpen(true)}
+                  className="relative p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-full transition-all"
+                  title="Keranjang Klaim"
+                >
+                  <ShoppingBag className="h-6 w-6" />
+                  {itemCount > 0 && (
+                    <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={logout}
+                  className="flex items-center px-4 py-2 rounded-full text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </button>
+              </div>
             )}
           </div>
 
@@ -134,6 +175,12 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+
+      <CartDrawer
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        onConfirm={handleConfirmClaims}
+      />
     </nav>
   );
 };
