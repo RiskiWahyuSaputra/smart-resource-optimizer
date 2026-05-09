@@ -17,6 +17,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Store,
   Utensils,
   Users,
   X,
@@ -70,6 +71,7 @@ type VerificationUser = {
     address?: string;
     verification_status?: VerificationStatus;
     document_url?: string | null;
+    store_image_url?: string | null;
   } | null;
 };
 
@@ -280,6 +282,7 @@ export default function DashboardPage() {
   const [verificationError, setVerificationError] = useState('');
   const [actionUserId, setActionUserId] = useState<number | null>(null);
   const [documentPreview, setDocumentPreview] = useState<DocumentPreview | null>(null);
+  const [storePreview, setStorePreview] = useState<DocumentPreview | null>(null);
   const [myFoodPosts, setMyFoodPosts] = useState<MarketplaceFoodPost[]>([]);
   const [foodPostsLoading, setFoodPostsLoading] = useState(false);
   const [foodPostsError, setFoodPostsError] = useState('');
@@ -537,16 +540,19 @@ export default function DashboardPage() {
   const pendingVerificationUsers = verificationUsers
     .filter((verificationUser) => verificationUser.profile?.verification_status === 'pending')
     .slice(0, 3);
+  const closeDocumentPreview = () => setDocumentPreview(null);
 
-  const closeDocumentPreview = () => {
-    setDocumentPreview((currentPreview) => {
-      if (currentPreview) {
-        window.URL.revokeObjectURL(currentPreview.url);
-      }
-
-      return null;
-    });
+  const handleOpenStoreImage = (user: VerificationUser) => {
+    if (user.profile?.store_image_url) {
+      setStorePreview({
+        fileName: 'Foto Toko / Supermarket',
+        url: user.profile.store_image_url,
+        userName: user.profile.name || user.name,
+      });
+    }
   };
+
+  const closeStorePreview = () => setStorePreview(null);
 
   const handleOpenDocument = async (verificationUser: VerificationUser) => {
     try {
@@ -1407,18 +1413,6 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="flex w-full max-w-sm flex-col gap-3">
-                          {verificationUser.profile?.store_image_url && (
-                            <div className="mb-1">
-                              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Foto Toko</p>
-                              <div className="h-32 w-full overflow-hidden rounded-xl border border-slate-200">
-                                <img 
-                                  src={verificationUser.profile.store_image_url} 
-                                  alt="Store" 
-                                  className="h-full w-full object-cover"
-                                />
-                              </div>
-                            </div>
-                          )}
                           <button
                             onClick={() => void handleOpenDocument(verificationUser)}
                             disabled={
@@ -1434,6 +1428,19 @@ export default function DashboardPage() {
                               ? 'Lihat Dokumen'
                               : 'Dokumen belum ada'}
                           </button>
+
+                          {verificationUser.role === 'restaurant' && (
+                            <button
+                              onClick={() => handleOpenStoreImage(verificationUser)}
+                              disabled={!verificationUser.profile?.store_image_url}
+                              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition-all hover:border-emerald-200 hover:text-emerald-700 disabled:opacity-60"
+                            >
+                              <Store className="h-4 w-4" />
+                              {verificationUser.profile?.store_image_url
+                                ? 'Lihat Tempat'
+                                : 'Foto tempat belum ada'}
+                            </button>
+                          )}
 
                           <div className="grid gap-3 sm:grid-cols-2">
                             <button
@@ -2203,6 +2210,60 @@ export default function DashboardPage() {
                 </a>
                 <button
                   onClick={closeDocumentPreview}
+                  className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700"
+                >
+                  Tutup
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {storePreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+          <div className="flex h-[85vh] w-full max-w-5xl flex-col overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600">
+                  Preview Foto Tempat
+                </p>
+                <h3 className="mt-2 text-xl font-bold text-slate-950">
+                  {storePreview.userName}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500">{storePreview.fileName}</p>
+              </div>
+              <button
+                onClick={closeStorePreview}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-slate-700"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 bg-slate-100 p-6 flex items-center justify-center overflow-hidden">
+              <img
+                src={storePreview.url}
+                alt={`Tempat ${storePreview.userName}`}
+                className="max-h-full max-w-full rounded-2xl shadow-xl object-contain bg-white"
+              />
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-4">
+              <p className="text-sm text-slate-500">
+                Gunakan foto ini untuk memverifikasi keaslian lokasi fisik restoran/toko.
+              </p>
+              <div className="flex items-center gap-3">
+                <a
+                  href={storePreview.url}
+                  download="foto-tempat.jpg"
+                  className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition-all hover:border-emerald-200 hover:text-emerald-700"
+                >
+                  <FileText className="h-4 w-4" />
+                  Unduh Foto
+                </a>
+                <button
+                  onClick={closeStorePreview}
                   className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-700"
                 >
                   Tutup
