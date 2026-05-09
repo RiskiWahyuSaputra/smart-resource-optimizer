@@ -31,6 +31,19 @@ class FoodPost extends Model
         ];
     }
 
+    public function getImageUrlAttribute($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

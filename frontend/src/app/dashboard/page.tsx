@@ -85,6 +85,7 @@ type FoodPostFormState = {
   long: string;
   available_until: string;
   image_url: string;
+  image_file: File | null;
 };
 
 const statusConfig: Record<
@@ -296,6 +297,7 @@ export default function DashboardPage() {
     long: '',
     available_until: formatDateTimeLocal(),
     image_url: '',
+    image_file: null,
   });
 
   const loadDashboardOverviewAnalytics = useCallback(async () => {
@@ -617,7 +619,7 @@ export default function DashboardPage() {
 
   const handleFoodPostFormChange = (
     field: keyof FoodPostFormState,
-    value: string
+    value: string | File | null
   ) => {
     setFoodPostForm((currentForm) => ({
       ...currentForm,
@@ -636,6 +638,7 @@ export default function DashboardPage() {
       long: '',
       available_until: formatDateTimeLocal(),
       image_url: '',
+      image_file: null,
     });
   };
 
@@ -656,19 +659,22 @@ export default function DashboardPage() {
     try {
       setSubmittingFoodPost(true);
 
-      const payload: FoodPostPayload = {
-        title: foodPostForm.title,
-        description: foodPostForm.description || undefined,
-        quantity: Number(foodPostForm.quantity),
-        quantity_unit: foodPostForm.quantity_unit,
-        pickup_address: foodPostForm.pickup_address,
-        lat: foodPostForm.lat ? Number(foodPostForm.lat) : undefined,
-        long: foodPostForm.long ? Number(foodPostForm.long) : undefined,
-        available_until: new Date(foodPostForm.available_until).toISOString(),
-        image_url: foodPostForm.image_url || undefined,
-      };
+      const formData = new FormData();
+      formData.append('title', foodPostForm.title);
+      if (foodPostForm.description) formData.append('description', foodPostForm.description);
+      formData.append('quantity', foodPostForm.quantity);
+      formData.append('quantity_unit', foodPostForm.quantity_unit);
+      formData.append('pickup_address', foodPostForm.pickup_address);
+      if (foodPostForm.lat) formData.append('lat', foodPostForm.lat);
+      if (foodPostForm.long) formData.append('long', foodPostForm.long);
+      formData.append('available_until', new Date(foodPostForm.available_until).toISOString());
+      if (foodPostForm.image_file) {
+        formData.append('image', foodPostForm.image_file);
+      } else if (foodPostForm.image_url) {
+        formData.append('image_url', foodPostForm.image_url);
+      }
 
-      await createFoodPost(payload);
+      await createFoodPost(formData);
       await Promise.all([loadMyRestaurantFoodPosts(), loadDashboardOverviewAnalytics()]);
       setFoodPostFeedback('Food post berhasil dibuat dan sudah tampil di marketplace.');
       setShowCreateFoodPostForm(false);
@@ -1604,13 +1610,15 @@ export default function DashboardPage() {
                   </div>
 
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">URL gambar</label>
+                    <label className="mb-2 block text-sm font-medium text-slate-700">Foto Makanan</label>
                     <input
-                      type="url"
-                      value={foodPostForm.image_url}
-                      onChange={(event) => handleFoodPostFormChange('image_url', event.target.value)}
-                      placeholder="https://..."
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                      type="file"
+                      accept="image/*"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] || null;
+                        handleFoodPostFormChange('image_file', file);
+                      }}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-xs file:font-bold file:text-emerald-700 hover:file:bg-emerald-100"
                     />
                   </div>
                 </div>

@@ -72,7 +72,7 @@ export const getMyFoodPosts = async () => {
   return response.data as { food_posts: MarketplaceFoodPost[] };
 };
 
-export const createFoodPost = async (payload: FoodPostPayload) => {
+export const createFoodPost = async (payload: FoodPostPayload | FormData) => {
   const response = await axios.post('/food-posts', payload);
   return response.data as { food_post: MarketplaceFoodPost };
 };

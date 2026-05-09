@@ -85,12 +85,17 @@ class FoodPostController extends Controller
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'long' => ['nullable', 'numeric', 'between:-180,180'],
             'available_until' => ['required', 'date', 'after:now'],
+            'image' => ['nullable', 'image', 'max:5120'],
             'image_url' => ['nullable', 'url', 'max:2048'],
             'status' => ['nullable', 'string', 'in:available,claimed,completed,expired'],
         ]);
 
+        if ($request->hasFile('image')) {
+            $validated['image_url'] = $request->file('image')->store('food-posts', 'public');
+        }
+
         $foodPost = $request->user()->foodPosts()->create([
-            ...$validated,
+            ...collect($validated)->except('image')->toArray(),
             'quantity_unit' => $validated['quantity_unit'] ?? 'porsi',
             'status' => $validated['status'] ?? 'available',
         ]);
