@@ -22,6 +22,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [documentFile, setDocumentFile] = useState<File | null>(null);
+  const [storeImageFile, setStoreImageFile] = useState<File | null>(null);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -54,6 +55,9 @@ export default function RegisterPage() {
         payload.append(key, value);
       });
       payload.append('verification_document', documentFile);
+      if (formData.role === 'restaurant' && storeImageFile) {
+        payload.append('store_image', storeImageFile);
+      }
 
       await registerApi(payload);
       router.push('/login?registered=true');
@@ -226,6 +230,44 @@ export default function RegisterPage() {
               }}
             />
           </div>
+
+          {formData.role === 'restaurant' && (
+            <div className="space-y-2 sm:col-span-2">
+              <label htmlFor="store_image" className="block text-sm font-semibold text-slate-700">
+                Foto Toko / Supermarket
+              </label>
+              <label
+                htmlFor="store_image"
+                className="flex cursor-pointer items-center justify-between gap-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/60 px-4 py-4 transition-all hover:border-emerald-300 hover:bg-emerald-50"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm ring-1 ring-emerald-100">
+                    <Store className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900">
+                      {storeImageFile ? storeImageFile.name : 'Unggah Foto Toko'}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-500">Maksimal 5MB. Foto ini akan tampil di peta.</p>
+                  </div>
+                </div>
+                <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-100">
+                  Pilih Foto
+                </span>
+              </label>
+              <input
+                id="store_image"
+                name="store_image"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const nextFile = e.target.files?.[0] ?? null;
+                  setStoreImageFile(nextFile);
+                }}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <label htmlFor="password" className="block text-sm font-semibold text-slate-700">

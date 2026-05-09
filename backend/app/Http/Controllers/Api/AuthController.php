@@ -21,11 +21,17 @@ class AuthController extends Controller
             'role' => ['required', 'string', 'in:restaurant,community'],
             'address' => ['required', 'string'],
             'verification_document' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
+            'store_image' => ['nullable', 'image', 'max:5120'],
         ]);
 
         if ($request->hasFile('verification_document')) {
             $validated['document_url'] = $request->file('verification_document')
                 ->store('verification-documents', 'public');
+        }
+
+        if ($request->hasFile('store_image')) {
+            $validated['store_image_url'] = $request->file('store_image')
+                ->store('store-images', 'public');
         }
 
         $user = $action->execute($validated);

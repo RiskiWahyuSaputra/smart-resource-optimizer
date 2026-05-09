@@ -20,6 +20,7 @@ export type MarketplaceFoodPost = {
     profile?: {
       name?: string;
       address?: string;
+      store_image_url?: string;
     } | null;
   };
 };

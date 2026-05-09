@@ -114,6 +114,7 @@ export default function MarketplacePage() {
     lat: normalizeCoordinate(post.lat, -6.2088),
     lng: normalizeCoordinate(post.long, 106.8456),
     pickupAddress: post.pickup_address,
+    storeImage: post.user.profile?.store_image_url,
   }));
 
   const mapCenter =

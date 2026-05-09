@@ -1407,6 +1407,18 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="flex w-full max-w-sm flex-col gap-3">
+                          {verificationUser.profile?.store_image_url && (
+                            <div className="mb-1">
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Foto Toko</p>
+                              <div className="h-32 w-full overflow-hidden rounded-xl border border-slate-200">
+                                <img 
+                                  src={verificationUser.profile.store_image_url} 
+                                  alt="Store" 
+                                  className="h-full w-full object-cover"
+                                />
+                              </div>
+                            </div>
+                          )}
                           <button
                             onClick={() => void handleOpenDocument(verificationUser)}
                             disabled={

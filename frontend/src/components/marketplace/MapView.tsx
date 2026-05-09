@@ -22,6 +22,7 @@ interface FoodPost {
   lat: number;
   lng: number;
   pickupAddress?: string;
+  storeImage?: string;
 }
 
 interface MapViewProps {
@@ -50,12 +51,26 @@ const MapView: React.FC<MapViewProps> = ({
         {posts.map((post) => (
           <Marker key={post.id} position={[post.lat, post.lng]}>
             <Popup>
-              <div className="p-1">
-                <h4 className="font-bold text-slate-900">{post.title}</h4>
-                <p className="text-sm text-slate-600">{post.restaurantName}</p>
-                {post.pickupAddress && (
-                  <p className="mt-1 text-xs text-slate-500">{post.pickupAddress}</p>
+              <div className="min-w-[200px]">
+                {post.storeImage && (
+                  <div className="mb-2 h-24 w-full overflow-hidden rounded-lg bg-slate-100">
+                    <img
+                      src={post.storeImage}
+                      alt={post.restaurantName}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 )}
+                <div className="p-1">
+                  <h4 className="font-bold text-slate-900">{post.title}</h4>
+                  <p className="text-sm text-slate-600 font-medium">{post.restaurantName}</p>
+                  {post.pickupAddress && (
+                    <p className="mt-1.5 text-xs text-slate-500 flex items-start gap-1">
+                      <span className="shrink-0 text-sky-500">📍</span>
+                      {post.pickupAddress}
+                    </p>
+                  )}
+                </div>
               </div>
             </Popup>
           </Marker>

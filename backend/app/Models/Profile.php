@@ -13,8 +13,22 @@ class Profile extends Model
         'lat',
         'long',
         'verification_status',
-        'document_url'
+        'document_url',
+        'store_image_url',
     ];
+
+    public function getStoreImageUrlAttribute($value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
 
     public function user()
     {
