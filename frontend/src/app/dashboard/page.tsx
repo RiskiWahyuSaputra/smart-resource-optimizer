@@ -1127,7 +1127,54 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
+    <>
+      <style jsx global>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        @keyframes slideInWidth {
+          from {
+            width: 0;
+          }
+        }
+        @keyframes growHeight {
+          from {
+            height: 0;
+          }
+        }
+      `}</style>
+      <div className="min-h-screen bg-slate-50 flex">
       <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 flex-col border-r border-slate-200 bg-white md:flex">
         <div className="border-b border-slate-100 p-6">
           <Link href="/" className="flex items-center gap-2">
@@ -1268,7 +1315,7 @@ export default function DashboardPage() {
         {activeTab === 'overview' && (
           <>
             {/* Hero Banner */}
-            <div className="relative mb-8 overflow-hidden rounded-3xl">
+            <div className="relative mb-8 overflow-hidden rounded-3xl" style={{ animation: 'fadeIn 0.6s ease-out' }}>
               <img
                 src="/images/bg.png"
                 alt=""
@@ -1276,7 +1323,7 @@ export default function DashboardPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-emerald-900/60 to-transparent" />
               <div className="relative z-10 flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-end md:p-10">
-                <div>
+                <div style={{ animation: 'slideInLeft 0.8s ease-out' }}>
                   <p className="mb-1 text-sm font-medium text-emerald-300 uppercase tracking-widest">
                     {isAdmin ? 'Admin Panel' : isRestaurant ? 'Restaurant Dashboard' : 'Community Dashboard'}
                   </p>
@@ -1293,6 +1340,7 @@ export default function DashboardPage() {
                   <button
                     onClick={() => setActiveTab('posts')}
                     className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-emerald-700 shadow-lg transition-all hover:bg-emerald-50 hover:scale-105"
+                    style={{ animation: 'slideInRight 0.8s ease-out' }}
                   >
                     <PlusCircle className="h-5 w-5" />
                     Post Makanan Baru
@@ -1305,58 +1353,58 @@ export default function DashboardPage() {
             <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {isAdmin ? (
                 <>
-                  <button onClick={() => setActiveTab('verification')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Users className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('verification')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
+                    <Users className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Verifikasi User
                   </button>
-                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <History className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
+                    <History className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Riwayat
                   </button>
-                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Store className="h-6 w-6 text-emerald-600" />
+                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.3s both' }}>
+                    <Store className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Marketplace
                   </Link>
-                  <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Settings className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.4s both' }}>
+                    <Settings className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Pengaturan
                   </button>
                 </>
               ) : isRestaurant ? (
                 <>
-                  <button onClick={() => setActiveTab('posts')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Utensils className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('posts')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
+                    <Utensils className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Kelola Makanan
                   </button>
-                  <button onClick={() => setActiveTab('incoming-claims')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Inbox className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('incoming-claims')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
+                    <Inbox className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Klaim Masuk
                   </button>
-                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <History className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.3s both' }}>
+                    <History className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Riwayat
                   </button>
-                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Store className="h-6 w-6 text-emerald-600" />
+                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.4s both' }}>
+                    <Store className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Marketplace
                   </Link>
                 </>
               ) : (
                 <>
-                  <button onClick={() => setActiveTab('claims')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <ShoppingBag className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('claims')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.1s both' }}>
+                    <ShoppingBag className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Klaim Saya
                   </button>
-                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <History className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.2s both' }}>
+                    <History className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Riwayat
                   </button>
-                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Store className="h-6 w-6 text-emerald-600" />
+                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.3s both' }}>
+                    <Store className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Marketplace
                   </Link>
-                  <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
-                    <Settings className="h-6 w-6 text-emerald-600" />
+                  <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 hover:-translate-y-1 hover:shadow-md" style={{ animation: 'fadeInUp 0.5s ease-out 0.4s both' }}>
+                    <Settings className="h-6 w-6 text-emerald-600 transition-transform duration-300 hover:scale-110" />
                     Pengaturan
                   </button>
                 </>
@@ -1458,45 +1506,52 @@ export default function DashboardPage() {
             ) : (
               <>
                 <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {analyticsStats.map((stat) => {
+                  {analyticsStats.map((stat, index) => {
                     const toneClasses = getToneClasses(stat.tone);
 
                     return (
                       <article
                         key={stat.label}
-                        className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-transform hover:-translate-y-0.5"
+                        className="group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+                        style={{
+                          animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`,
+                        }}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                              {stat.label}
-                            </p>
-                            <p className="mt-4 text-3xl font-bold text-slate-950 sm:text-4xl">
-                              {formatNumber(stat.value)}
+                        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-slate-50/50 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+                        <div className="relative z-10">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 transition-colors duration-300 group-hover:text-slate-500">
+                                {stat.label}
+                              </p>
+                              <p className="mt-4 text-3xl font-bold text-slate-950 transition-all duration-300 sm:text-4xl group-hover:scale-105">
+                                {formatNumber(stat.value)}
+                              </p>
+                            </div>
+                            <span
+                              className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xs font-bold transition-all duration-300 ${toneClasses.surface} group-hover:scale-110 group-hover:rotate-3`}
+                            >
+                              {String(stat.label).slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="mt-5">
+                            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={`h-full rounded-full transition-all duration-1000 ease-out ${toneClasses.bar}`}
+                                style={{
+                                  width: `${Math.min(
+                                    100,
+                                    Math.max(18, stat.value === 0 ? 18 : stat.value * 12)
+                                  )}%`,
+                                  animation: `slideInWidth 1s ease-out ${index * 0.15}s both`,
+                                }}
+                              ></div>
+                            </div>
+                            <p className={`mt-3 text-sm font-medium transition-colors duration-300 ${toneClasses.text}`}>
+                              Ringkasan otomatis dari aktivitas {isAdmin ? 'platform' : 'Anda'} saat
+                              ini.
                             </p>
                           </div>
-                          <span
-                            className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-xs font-bold ${toneClasses.surface}`}
-                          >
-                            {String(stat.label).slice(0, 2).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="mt-5">
-                          <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                            <div
-                              className={`h-full rounded-full ${toneClasses.bar}`}
-                              style={{
-                                width: `${Math.min(
-                                  100,
-                                  Math.max(18, stat.value === 0 ? 18 : stat.value * 12)
-                                )}%`,
-                              }}
-                            ></div>
-                          </div>
-                          <p className={`mt-3 text-sm font-medium ${toneClasses.text}`}>
-                            Ringkasan otomatis dari aktivitas {isAdmin ? 'platform' : 'Anda'} saat
-                            ini.
-                          </p>
                         </div>
                       </article>
                     );
@@ -1529,24 +1584,33 @@ export default function DashboardPage() {
                     <div className="mt-8 overflow-x-auto pb-2">
                       <div className="flex min-w-[340px] items-end gap-3 sm:gap-4">
                         {analyticsSeries.length > 0 ? (
-                          analyticsSeries.map((point) => {
+                          analyticsSeries.map((point, index) => {
                             const barHeight =
                               point.value === 0
                                 ? 0
                                 : Math.max(12, (point.value / analyticsPeak) * 100);
 
                             return (
-                              <div key={point.label} className="flex min-h-[240px] flex-1 flex-col">
-                                <div className="mb-3 text-center text-sm font-semibold text-slate-700">
+                              <div 
+                                key={point.label} 
+                                className="group flex min-h-[240px] flex-1 flex-col"
+                                style={{
+                                  animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                                }}
+                              >
+                                <div className="mb-3 text-center text-sm font-semibold text-slate-700 transition-all duration-300 group-hover:scale-110 group-hover:text-emerald-600">
                                   {formatNumber(point.value)}
                                 </div>
-                                <div className="relative flex-1 rounded-[24px] bg-slate-100">
+                                <div className="relative flex-1 rounded-[24px] bg-slate-100 transition-all duration-300 group-hover:bg-slate-200">
                                   <div
-                                    className="absolute inset-x-0 bottom-0 rounded-[24px] bg-gradient-to-t from-emerald-500 via-emerald-400 to-sky-400 shadow-lg shadow-emerald-100"
-                                    style={{ height: `${barHeight}%` }}
+                                    className="absolute inset-x-0 bottom-0 rounded-[24px] bg-gradient-to-t from-emerald-500 via-emerald-400 to-sky-400 shadow-lg shadow-emerald-100 transition-all duration-700 ease-out group-hover:shadow-2xl group-hover:shadow-emerald-200"
+                                    style={{ 
+                                      height: `${barHeight}%`,
+                                      animation: `growHeight 1s ease-out ${index * 0.1}s both`,
+                                    }}
                                   ></div>
                                 </div>
-                                <div className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                <div className="mt-3 text-center text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 transition-colors duration-300 group-hover:text-slate-600">
                                   {point.label}
                                 </div>
                               </div>
@@ -1747,31 +1811,34 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="mt-6 grid gap-4 sm:grid-cols-3">
-                      {overviewSnapshotItems.map((item) => {
+                      {overviewSnapshotItems.map((item, index) => {
                         const toneClasses = getToneClasses(item.tone);
                         const ItemIcon = item.icon;
 
                         return (
                           <article
                             key={item.label}
-                            className="rounded-[28px] border border-slate-200 bg-slate-50 p-5"
+                            className="group rounded-[28px] border border-slate-200 bg-slate-50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg"
+                            style={{
+                              animation: `fadeInUp 0.5s ease-out ${index * 0.15}s both`,
+                            }}
                           >
                             <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                              <div className="flex-1">
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400 transition-colors duration-300 group-hover:text-slate-500">
                                   {item.label}
                                 </p>
-                                <p className="mt-4 text-2xl font-bold text-slate-950 sm:text-3xl">
+                                <p className="mt-4 text-2xl font-bold text-slate-950 transition-all duration-300 sm:text-3xl group-hover:scale-105">
                                   {item.value}
                                 </p>
                               </div>
                               <span
-                                className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses.surface}`}
+                                className={`inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl transition-all duration-300 ${toneClasses.surface} group-hover:scale-110 group-hover:rotate-6`}
                               >
-                                <ItemIcon className="h-5 w-5" />
+                                <ItemIcon className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
                               </span>
                             </div>
-                            <p className="mt-4 text-sm leading-6 text-slate-500">{item.caption}</p>
+                            <p className="mt-4 text-sm leading-6 text-slate-500 transition-colors duration-300 group-hover:text-slate-600">{item.caption}</p>
                           </article>
                         );
                       })}
@@ -1825,18 +1892,21 @@ export default function DashboardPage() {
 
                     <div className="mt-6 space-y-3">
                       {overviewRecentItems.length > 0 ? (
-                        overviewRecentItems.map((item) => (
+                        overviewRecentItems.map((item, index) => (
                           <article
                             key={item.id}
-                            className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-emerald-200 hover:bg-white"
+                            className="group rounded-2xl border border-slate-200 bg-slate-50 p-4 transition-all duration-300 hover:-translate-x-1 hover:border-emerald-200 hover:bg-white hover:shadow-md"
+                            style={{
+                              animation: `slideInRight 0.5s ease-out ${index * 0.1}s both`,
+                            }}
                           >
                             <div className="flex items-start justify-between gap-4">
-                              <div>
-                                <p className="font-semibold text-slate-950">{item.title}</p>
+                              <div className="flex-1">
+                                <p className="font-semibold text-slate-950 transition-colors duration-300 group-hover:text-emerald-700">{item.title}</p>
                                 <p className="mt-1 text-sm leading-6 text-slate-500">{item.meta}</p>
                               </div>
                               <span
-                                className={`rounded-full px-3 py-1 text-xs font-semibold ${item.badgeClassName}`}
+                                className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold transition-all duration-300 ${item.badgeClassName} group-hover:scale-105`}
                               >
                                 {item.badge}
                               </span>
@@ -2822,5 +2892,6 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
