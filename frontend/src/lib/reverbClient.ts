@@ -9,9 +9,16 @@ if (typeof window !== 'undefined') {
 }
 
 let echo: Echo | null = null;
+let currentToken: string | null = null;
 
 export function getEchoClient(token: string): Echo {
-  if (echo) return echo;
+  if (echo && currentToken === token) return echo;
+  
+  if (echo) {
+    echo.disconnect();
+  }
+  
+  currentToken = token;
 
   const apiBase =
     process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";

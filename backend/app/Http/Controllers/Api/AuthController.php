@@ -36,7 +36,7 @@ class AuthController extends Controller
 
         $user = $action->execute($validated);
 
-        broadcast(new \App\Events\UserRegistered($user))->toOthers();
+        broadcast(new \App\Events\UserRegistered($user));
 
         $token = $user->createToken('api')->plainTextToken;
 

@@ -25,6 +25,7 @@ class RegisterUserAction
                 'long' => $data['long'] ?? null,
                 'verification_status' => 'pending',
                 'document_url' => $data['document_url'] ?? null,
+                'store_image_url' => $data['store_image_url'] ?? null,
             ]);
 
             return $user;

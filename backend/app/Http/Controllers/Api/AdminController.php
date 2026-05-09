@@ -55,7 +55,7 @@ class AdminController extends Controller
         broadcast(new UserVerificationUpdated(
             userId: $user->id,
             verificationStatus: (string) $request->status
-        ))->toOthers();
+        ));
 
 
         return response()->json([

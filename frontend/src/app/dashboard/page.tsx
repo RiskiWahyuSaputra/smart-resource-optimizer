@@ -352,23 +352,23 @@ export default function DashboardPage() {
 
     // 1. Listen for user-specific verification updates
     const userChannel = echo.private(`user.${user.id}`);
-    userChannel.listen('.user.verification.updated', (data: unknown) => {
-      console.log('User verification updated (realtime):', data);
-      void checkAuth(); // Refresh user object in context
+    userChannel.listen('.user.verification.updated', (data: any) => {
+      console.log('🔔 [Realtime] Status verifikasi Anda diperbarui:', data);
+      void checkAuth(); 
     });
 
     // 2. Listen for admin-wide updates
     if (user.role === 'admin') {
       const adminChannel = echo.private('admin');
       
-      adminChannel.listen('.user.verification.updated', (data: unknown) => {
-        console.log('Admin: User verification updated (realtime):', data);
+      adminChannel.listen('.user.verification.updated', (data: any) => {
+        console.log('🔔 [Admin] Perubahan verifikasi user (realtime):', data);
         void loadAllVerifications();
         void loadDashboardOverviewAnalytics();
       });
 
-      adminChannel.listen('.user.registered', (data: unknown) => {
-        console.log('Admin: New user registered (realtime):', data);
+      adminChannel.listen('.user.registered', (data: any) => {
+        console.log('🔔 [Admin] User baru terdaftar (realtime):', data);
         void loadAllVerifications();
         void loadDashboardOverviewAnalytics();
       });

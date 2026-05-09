@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from '@/lib/axios';
 import Cookies from 'js-cookie';
@@ -10,6 +10,7 @@ interface UserProfile {
   address?: string;
   verification_status?: string;
   document_url?: string | null;
+  store_image_url?: string | null;
 }
 
 interface User {
@@ -91,16 +92,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/dashboard');
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     Cookies.remove('token');
     setToken(null);
     setUser(null);
     router.push('/login');
-  };
+  }, [router]);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await axios.get('/user');
       setUser(response.data);
@@ -108,7 +109,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch {
       logout();
     }
-  };
+  }, [logout]);
 
   return (
     <AuthContext.Provider value={{ user, token, loading, login, logout, checkAuth }}>
