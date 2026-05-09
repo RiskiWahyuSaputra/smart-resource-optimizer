@@ -143,7 +143,7 @@ export default function MarketplacePage() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex flex-col">
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 sm:px-6">
+      <div className="bg-white border-b border-slate-200 sticky top-16 z-10 px-4 py-3 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col gap-4 sm:flex-row items-center justify-between">
           <div className="relative w-full sm:w-96">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -307,7 +307,7 @@ export default function MarketplacePage() {
             flex-1 p-4 sm:p-6 md:pl-0 h-[500px] md:h-auto
             ${viewMode === 'list' ? 'hidden' : 'block'}
             ${viewMode === 'split' ? 'md:w-1/2' : 'w-full'}
-            sticky top-[73px]
+            sticky top-[129px]
           `}
         >
           <MapView posts={mappedPosts} center={mapCenter} />

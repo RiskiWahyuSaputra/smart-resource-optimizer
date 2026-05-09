@@ -784,7 +784,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
-      <aside className="sticky top-0 hidden h-screen w-64 flex-col border-r border-slate-200 bg-white md:flex">
+      <aside className="sticky top-16 hidden h-[calc(100vh-4rem)] w-64 flex-col border-r border-slate-200 bg-white md:flex">
         <div className="border-b border-slate-100 p-6">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white font-bold">
@@ -884,6 +884,14 @@ export default function DashboardPage() {
               Riwayat
             </span>
           </button>
+
+          <Link
+            href="/marketplace"
+            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-slate-600 transition-all hover:bg-slate-50"
+          >
+            <Store className="h-5 w-5" />
+            Marketplace
+          </Link>
         </nav>
 
         <div className="border-t border-slate-100 p-4">
@@ -915,28 +923,101 @@ export default function DashboardPage() {
       <main className="flex-1 overflow-y-auto p-4 md:p-8">
         {activeTab === 'overview' && (
           <>
-            <header className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-950">Halo, {user.name}!</h1>
-                <p className="text-slate-500">
-                  {isAdmin
-                    ? 'Kelola antrean verifikasi dan pantau status akun pengguna dari satu dashboard.'
-                    : `Selamat datang kembali di dashboard ${
-                        isRestaurant ? 'Restoran' : 'Komunitas'
-                      } Anda.`}
-                </p>
+            {/* Hero Banner */}
+            <div className="relative mb-8 overflow-hidden rounded-3xl">
+              <img
+                src="/images/bg.png"
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/80 via-emerald-900/60 to-transparent" />
+              <div className="relative z-10 flex flex-col items-start justify-between gap-6 p-8 md:flex-row md:items-end md:p-10">
+                <div>
+                  <p className="mb-1 text-sm font-medium text-emerald-300 uppercase tracking-widest">
+                    {isAdmin ? 'Admin Panel' : isRestaurant ? 'Restaurant Dashboard' : 'Community Dashboard'}
+                  </p>
+                  <h1 className="text-3xl font-bold text-white md:text-4xl">
+                    Halo, {user.name}! 👋
+                  </h1>
+                  <p className="mt-2 max-w-lg text-white/70">
+                    {isAdmin
+                      ? 'Kelola antrean verifikasi dan pantau status akun pengguna dari satu dashboard.'
+                      : `Selamat datang kembali di dashboard ${isRestaurant ? 'Restoran' : 'Komunitas'} Anda.`}
+                  </p>
+                </div>
+                {!isAdmin && isRestaurant && currentStatus === 'verified' && (
+                  <button
+                    onClick={() => setActiveTab('posts')}
+                    className="flex shrink-0 items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-emerald-700 shadow-lg transition-all hover:bg-emerald-50 hover:scale-105"
+                  >
+                    <PlusCircle className="h-5 w-5" />
+                    Post Makanan Baru
+                  </button>
+                )}
               </div>
+            </div>
 
-              {!isAdmin && isRestaurant && currentStatus === 'verified' && (
-                <button
-                  onClick={() => setActiveTab('posts')}
-                  className="flex items-center gap-2 rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-lg shadow-emerald-100 transition-all hover:bg-emerald-700"
-                >
-                  <PlusCircle className="h-5 w-5" />
-                  Post Makanan Baru
-                </button>
+            {/* Quick Actions */}
+            <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {isAdmin ? (
+                <>
+                  <button onClick={() => setActiveTab('verification')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Users className="h-6 w-6 text-emerald-600" />
+                    Verifikasi User
+                  </button>
+                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <History className="h-6 w-6 text-emerald-600" />
+                    Riwayat
+                  </button>
+                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Store className="h-6 w-6 text-emerald-600" />
+                    Marketplace
+                  </Link>
+                  <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Settings className="h-6 w-6 text-emerald-600" />
+                    Pengaturan
+                  </button>
+                </>
+              ) : isRestaurant ? (
+                <>
+                  <button onClick={() => setActiveTab('posts')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Utensils className="h-6 w-6 text-emerald-600" />
+                    Kelola Makanan
+                  </button>
+                  <button onClick={() => setActiveTab('incoming-claims')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Inbox className="h-6 w-6 text-emerald-600" />
+                    Klaim Masuk
+                  </button>
+                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <History className="h-6 w-6 text-emerald-600" />
+                    Riwayat
+                  </button>
+                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Store className="h-6 w-6 text-emerald-600" />
+                    Marketplace
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => setActiveTab('claims')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <ShoppingBag className="h-6 w-6 text-emerald-600" />
+                    Klaim Saya
+                  </button>
+                  <button onClick={() => setActiveTab('history')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <History className="h-6 w-6 text-emerald-600" />
+                    Riwayat
+                  </button>
+                  <Link href="/marketplace" className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Store className="h-6 w-6 text-emerald-600" />
+                    Marketplace
+                  </Link>
+                  <button onClick={() => setActiveTab('settings')} className="flex flex-col items-center gap-2 rounded-2xl border border-slate-200 bg-white p-4 text-sm font-medium text-slate-700 shadow-sm transition-all hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700">
+                    <Settings className="h-6 w-6 text-emerald-600" />
+                    Pengaturan
+                  </button>
+                </>
               )}
-            </header>
+            </div>
 
             {!isAdmin && currentStatus !== 'verified' && (
               <div className={`mb-8 rounded-2xl border p-6 ${currentStatusConfig.wrapper}`}>
