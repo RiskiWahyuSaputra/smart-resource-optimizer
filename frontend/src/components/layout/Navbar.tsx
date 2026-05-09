@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { Menu, X, Leaf, LayoutDashboard, LogOut, LogIn, UserPlus, ShoppingCart, ShoppingBag } from 'lucide-react';
@@ -21,6 +21,18 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [wasScrolled, setWasScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrolled = window.scrollY > 50;
+      if (scrolled && !wasScrolled) setWasScrolled(true);
+      setIsScrolled(scrolled);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [wasScrolled]);
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -58,16 +70,26 @@ const Navbar = () => {
       ];
 
   return (
-    <nav className="bg-white border-b border-green-100 sticky top-0 z-50">
+    <nav className={cn(
+      "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+      isScrolled
+        ? "bg-white/95 backdrop-blur-md shadow-lg navbar-scrolled"
+        : "bg-transparent"
+    )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center group">
-              <div className="bg-green-600 p-1.5 rounded-lg group-hover:bg-green-700 transition-colors">
-                <Leaf className="h-6 w-6 text-white" />
+              <div className={cn(
+                "p-1.5 rounded-lg transition-colors border",
+                isScrolled
+                  ? "bg-emerald-50 border-emerald-200 group-hover:bg-emerald-100"
+                  : "bg-white/20 backdrop-blur-sm border-white/30 group-hover:bg-white/30"
+              )}>
+                <Leaf className={cn("h-6 w-6", isScrolled ? "text-emerald-600" : "text-white")} />
               </div>
-              <span className="ml-2.5 text-xl font-bold text-gray-900 tracking-tight">
-                SRO<span className="text-green-600">.</span>
+              <span className={cn("ml-2.5 text-xl font-bold tracking-tight", isScrolled ? "text-slate-900" : "text-white drop-shadow-lg")}>
+                SRO<span className="text-emerald-500">.</span>
               </span>
             </Link>
             <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
@@ -75,7 +97,12 @@ const Navbar = () => {
                 <Link
                   key={link.name}
                   href={link.href}
-                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-green-600 hover:border-green-600 transition-all border-b-2 border-transparent"
+                  className={cn(
+                    "inline-flex items-center px-1 pt-1 text-sm font-medium transition-all border-b-2 border-transparent",
+                    isScrolled
+                      ? "text-slate-600 hover:text-slate-900 hover:border-emerald-500"
+                      : "text-white/80 hover:text-white hover:border-white/50"
+                  )}
                 >
                   {link.name}
                 </Link>
@@ -91,8 +118,12 @@ const Navbar = () => {
                 className={cn(
                   "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200",
                   link.name === 'Register' || link.name === 'Dashboard'
-                    ? "bg-green-600 text-white hover:bg-green-700 shadow-sm hover:shadow-md"
-                    : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                    ? isScrolled
+                      ? "bg-emerald-600 text-white hover:bg-emerald-700 shadow-md"
+                      : "bg-white text-emerald-700 hover:bg-white/90 shadow-lg"
+                    : isScrolled
+                      ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      : "text-white/90 hover:text-white hover:bg-white/10 backdrop-blur-sm"
                 )}
               >
                 {link.name}
@@ -102,7 +133,12 @@ const Navbar = () => {
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setIsCartOpen(true)}
-                  className="relative p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-full transition-all"
+                  className={cn(
+                    "relative p-2 rounded-full transition-all",
+                    isScrolled
+                      ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      : "text-white/80 hover:text-white hover:bg-white/10 backdrop-blur-sm"
+                  )}
                   title="Keranjang Klaim"
                 >
                   <ShoppingBag className="h-6 w-6" />
@@ -114,7 +150,12 @@ const Navbar = () => {
                 </button>
                 <button
                   onClick={logout}
-                  className="flex items-center px-4 py-2 rounded-full text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+                  className={cn(
+                    "flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all",
+                    isScrolled
+                      ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                      : "text-white/90 hover:bg-white/10 backdrop-blur-sm"
+                  )}
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
@@ -126,13 +167,18 @@ const Navbar = () => {
           <div className="-mr-2 flex items-center sm:hidden">
             <button
               onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-green-600 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500 transition-colors"
+              className={cn(
+                "inline-flex items-center justify-center p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-inset transition-colors",
+                isScrolled
+                  ? "text-slate-600 hover:text-slate-900 hover:bg-slate-100 focus:ring-emerald-500"
+                  : "text-white/80 hover:text-white hover:bg-white/10 focus:ring-white/50 backdrop-blur-sm"
+              )}
             >
               <span className="sr-only">Open main menu</span>
               {isMenuOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
+                <X className={cn("block h-6 w-6", isScrolled ? "text-slate-700" : "")} aria-hidden="true" />
               ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
+                <Menu className={cn("block h-6 w-6", isScrolled ? "text-slate-700" : "")} aria-hidden="true" />
               )}
             </button>
           </div>
@@ -141,23 +187,38 @@ const Navbar = () => {
 
       {/* Mobile menu */}
       <div className={cn("sm:hidden", isMenuOpen ? "block" : "hidden")}>
-        <div className="pt-2 pb-3 space-y-1 bg-white border-t border-green-50">
+        <div className={cn(
+          "pt-2 pb-3 space-y-1 border-t",
+          isScrolled
+            ? "bg-white border-slate-200"
+            : "bg-white/10 backdrop-blur-lg border-white/20"
+        )}>
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
-              className="flex items-center block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 hover:border-green-600 transition-all"
+              className={cn(
+                "flex items-center block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium transition-all",
+                isScrolled
+                  ? "text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-emerald-500"
+                  : "text-white/90 hover:text-white hover:bg-white/10 hover:border-white"
+              )}
             >
               <link.icon className="h-5 w-5 mr-3" />
               {link.name}
             </Link>
           ))}
-          <div className="pt-4 pb-3 border-t border-green-50">
+          <div className={cn("pt-4 pb-3 border-t", isScrolled ? "border-slate-200" : "border-white/20")}>
             {authLinks.map((link) => (
               <Link
                 key={link.name}
                 href={link.href}
-                className="flex items-center block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:text-green-600 hover:bg-green-50 hover:border-green-600 transition-all"
+                className={cn(
+                  "flex items-center block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium transition-all",
+                  isScrolled
+                    ? "text-slate-700 hover:text-slate-900 hover:bg-slate-50 hover:border-emerald-500"
+                    : "text-white/90 hover:text-white hover:bg-white/10 hover:border-white"
+                )}
               >
                 <link.icon className="h-5 w-5 mr-3" />
                 {link.name}
@@ -166,7 +227,12 @@ const Navbar = () => {
             {user && (
               <button
                 onClick={logout}
-                className="w-full flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-red-600 hover:bg-red-50 transition-all"
+                className={cn(
+                  "w-full flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium transition-all",
+                  isScrolled
+                    ? "text-slate-700 hover:bg-slate-50"
+                    : "text-white/90 hover:bg-white/10"
+                )}
               >
                 <LogOut className="h-5 w-5 mr-3" />
                 Logout

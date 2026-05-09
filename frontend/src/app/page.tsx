@@ -1,48 +1,11 @@
 import Link from "next/link";
-import { ArrowRight, Leaf, ShieldCheck, Users, MapPin } from "lucide-react";
+import { Leaf, ShieldCheck, Users, MapPin } from "lucide-react";
+import HeroSection from "@/components/layout/HeroSection";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-white text-slate-900 overflow-hidden">
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-16 md:pt-32 md:pb-24 overflow-hidden">
-        {/* Background Decorative Elements */}
-        <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 w-[600px] h-[600px] bg-emerald-50 rounded-full blur-3xl opacity-60 z-0" />
-        <div className="absolute bottom-0 left-0 translate-y-1/4 -translate-x-1/4 w-[400px] h-[400px] bg-green-50 rounded-full blur-3xl opacity-60 z-0" />
-
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-sm font-medium mb-6 animate-fade-in">
-              <Leaf className="w-4 h-4" />
-              <span>Misi Zero Food Waste Indonesia</span>
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-serif font-bold tracking-tight text-slate-950 mb-8 leading-[1.1]">
-              Ubah <span className="text-emerald-600 italic">Kelebihan</span> Menjadi <span className="text-emerald-600 underline decoration-emerald-200 underline-offset-8">Kebaikan</span>.
-            </h1>
-            
-            <p className="text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Smart Resource Optimizer (SRO) menghubungkan restoran yang memiliki makanan berlebih dengan komunitas yang membutuhkan. Bersama, kita kurangi limbah pangan dan bantu sesama.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link 
-                href="/register" 
-                className="w-full sm:w-auto px-8 py-4 bg-emerald-600 text-white font-semibold rounded-xl hover:bg-emerald-700 transition-all shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 group"
-              >
-                Mulai Berbagi Sekarang
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <Link 
-                href="/marketplace" 
-                className="w-full sm:w-auto px-8 py-4 bg-white text-emerald-700 font-semibold rounded-xl border-2 border-emerald-100 hover:border-emerald-200 transition-all flex items-center justify-center gap-2"
-              >
-                Eksplorasi Marketplace
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       {/* Stats / Proof Section */}
       <section className="py-12 bg-slate-50 border-y border-slate-100">
