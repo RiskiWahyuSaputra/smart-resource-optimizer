@@ -76,7 +76,9 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, onConfirm }) =
                   <h4 className="font-bold text-slate-900 truncate">{item.title}</h4>
                   <p className="text-xs text-slate-500 font-medium mb-1">{item.restaurantName}</p>
                   <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                    <span>{item.quantity}</span>
+                    <span className="bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-bold">
+                      {item.quantity} {item.unit}
+                    </span>
                     <span>•</span>
                     <span className="text-amber-600 font-medium">{item.expiryTime}</span>
                   </div>

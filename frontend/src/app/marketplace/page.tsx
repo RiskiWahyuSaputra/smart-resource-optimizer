@@ -65,7 +65,7 @@ export default function MarketplacePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
   const { user } = useAuth();
-  const { addItem, items: cartItems } = useCart();
+  const { addItem, updateQuantity, items: cartItems } = useCart();
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const loadFoodPosts = async (search?: string) => {
@@ -96,7 +96,16 @@ export default function MarketplacePage() {
       setError('Silakan login terlebih dahulu untuk mengklaim makanan.');
       return;
     }
-    addItem(food);
+    addItem({
+      id: food.id,
+      title: food.title,
+      restaurantName: food.restaurantName,
+      unit: food.unit,
+      maxQuantity: food.maxQuantity,
+      location: food.location,
+      expiryTime: food.expiryTime,
+      image: food.image,
+    });
     setFeedbackMessage(`"${food.title}" telah ditambahkan ke keranjang klaim.`);
     // Auto clear feedback after 3 seconds
     setTimeout(() => setFeedbackMessage(''), 3000);
@@ -108,6 +117,8 @@ export default function MarketplacePage() {
     description: post.description || '',
     restaurantName: post.user.profile?.name || post.user.name,
     quantity: `${post.quantity} ${post.quantity_unit}`,
+    maxQuantity: post.quantity,
+    unit: post.quantity_unit,
     location: post.pickup_address,
     expiryTime: formatRemainingTime(post.available_until),
     image: post.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&h=300&auto=format&fit=crop',
@@ -230,15 +241,18 @@ export default function MarketplacePage() {
             <div className="flex flex-col gap-8">
               <div className={`grid gap-4 sm:gap-6 ${viewMode === 'list' ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}>
                 {paginatedPosts.map((food) => {
-                  const isInCart = cartItems.some(item => item.id === food.id);
+                  const cartItem = cartItems.find(item => item.id === food.id);
                   return (
                     <FoodCard
                       key={food.id}
                       food={food}
+                      quantityInCart={cartItem?.quantity || 0}
+                      onIncrement={() => updateQuantity(food.id, 1)}
+                      onDecrement={() => updateQuantity(food.id, -1)}
                       actionLabel={
-                        isInCart ? 'Sudah di Keranjang' : (user ? 'Tambah ke Keranjang' : 'Login untuk Klaim')
+                        user ? 'Tambah ke Keranjang' : 'Login untuk Klaim'
                       }
-                      actionDisabled={isInCart || !user}
+                      actionDisabled={!user}
                       onAction={() => {
                         if (user) {
                           handleAddToCart(food);

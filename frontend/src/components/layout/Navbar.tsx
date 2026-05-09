@@ -28,9 +28,9 @@ const Navbar = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      // Process all items in cart
+      // Process all items in cart with their specific quantities
       const promises = items.map(item => 
-        claimFoodPost(item.id, 1, 'Klaim kolektif dari keranjang')
+        claimFoodPost(item.id, item.quantity, 'Klaim kolektif dari keranjang')
       );
       await Promise.all(promises);
       clearCart();

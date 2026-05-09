@@ -6,7 +6,9 @@ export type CartItem = {
   id: number;
   title: string;
   restaurantName: string;
-  quantity: string;
+  quantity: number;
+  unit: string;
+  maxQuantity: number;
   location: string;
   expiryTime: string;
   image: string;
@@ -14,7 +16,8 @@ export type CartItem = {
 
 type CartContextType = {
   items: CartItem[];
-  addItem: (item: CartItem) => void;
+  addItem: (item: Omit<CartItem, 'quantity'>) => void;
+  updateQuantity: (id: number, delta: number) => void;
   removeItem: (id: number) => void;
   clearCart: () => void;
   itemCount: number;
@@ -42,11 +45,32 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem('sro_cart', JSON.stringify(items));
   }, [items]);
 
-  const addItem = (item: CartItem) => {
+  const addItem = (item: Omit<CartItem, 'quantity'>) => {
     setItems((prev) => {
-      // Avoid duplicates
-      if (prev.find((i) => i.id === item.id)) return prev;
-      return [...prev, item];
+      const existing = prev.find((i) => i.id === item.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.id === item.id
+            ? { ...i, quantity: Math.min(i.quantity + 1, i.maxQuantity) }
+            : i
+        );
+      }
+      return [...prev, { ...item, quantity: 1 }];
+    });
+  };
+
+  const updateQuantity = (id: number, delta: number) => {
+    setItems((prev) => {
+      return prev
+        .map((item) => {
+          if (item.id === id) {
+            const newQuantity = item.quantity + delta;
+            if (newQuantity <= 0) return null;
+            return { ...item, quantity: Math.min(newQuantity, item.maxQuantity) };
+          }
+          return item;
+        })
+        .filter((item): item is CartItem => item !== null);
     });
   };
 
@@ -58,14 +82,17 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems([]);
   };
 
+  const totalItemCount = items.reduce((total, item) => total + item.quantity, 0);
+
   return (
     <CartContext.Provider
       value={{
         items,
         addItem,
+        updateQuantity,
         removeItem,
         clearCart,
-        itemCount: items.length,
+        itemCount: totalItemCount,
       }}
     >
       {children}

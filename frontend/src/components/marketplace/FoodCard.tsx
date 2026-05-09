@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, MapPin, Package } from 'lucide-react';
+import { Clock, MapPin, Package, Minus, Plus } from 'lucide-react';
 
 interface FoodCardProps {
   food: {
@@ -15,6 +15,9 @@ interface FoodCardProps {
   actionLabel?: string;
   onAction?: () => void;
   actionDisabled?: boolean;
+  quantityInCart?: number;
+  onIncrement?: () => void;
+  onDecrement?: () => void;
 }
 
 const FoodCard: React.FC<FoodCardProps> = ({
@@ -22,6 +25,9 @@ const FoodCard: React.FC<FoodCardProps> = ({
   actionLabel = 'Lihat Detail',
   onAction,
   actionDisabled = false,
+  quantityInCart = 0,
+  onIncrement,
+  onDecrement,
 }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-300 flex flex-col h-full">
@@ -67,13 +73,33 @@ const FoodCard: React.FC<FoodCardProps> = ({
           </div>
         </div>
         
-        <button
-          onClick={onAction}
-          disabled={actionDisabled}
-          className="w-full mt-3 sm:mt-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-1.5 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 shadow-sm shadow-emerald-100"
-        >
-          {actionLabel}
-        </button>
+        {quantityInCart > 0 ? (
+          <div className="w-full mt-3 sm:mt-4 flex items-center justify-between bg-emerald-50 rounded-lg p-1 border border-emerald-100">
+            <button
+              onClick={onDecrement}
+              className="p-1 sm:p-2 text-emerald-600 hover:bg-white rounded-md transition-colors"
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="font-bold text-emerald-700 text-sm sm:text-base">
+              {quantityInCart}
+            </span>
+            <button
+              onClick={onIncrement}
+              className="p-1 sm:p-2 text-emerald-600 hover:bg-white rounded-md transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onAction}
+            disabled={actionDisabled}
+            className="w-full mt-3 sm:mt-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white py-1.5 sm:py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors duration-200 shadow-sm shadow-emerald-100"
+          >
+            {actionLabel}
+          </button>
+        )}
       </div>
     </div>
   );
