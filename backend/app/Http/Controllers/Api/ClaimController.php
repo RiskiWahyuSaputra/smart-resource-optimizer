@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Claim;
 use App\Models\FoodPost;
 use Illuminate\Http\Request;
+use App\Events\ClaimCreated;
+use App\Events\ClaimUpdated;
+use App\Events\FoodPostUpdated;
 
 class ClaimController extends Controller
 {
@@ -78,6 +81,10 @@ class ClaimController extends Controller
             'status' => $newQuantity <= 0 ? 'claimed' : 'available',
         ]);
 
+        // Broadcast events
+        broadcast(new ClaimCreated($claim))->toOthers();
+        broadcast(new FoodPostUpdated($foodPost))->toOthers();
+
         return response()->json([
             'claim' => $claim->load(['foodPost.user.profile', 'user.profile']),
         ], 201);
@@ -124,7 +131,13 @@ class ClaimController extends Controller
                 'quantity' => $claim->foodPost->quantity + $claim->quantity,
                 'status' => 'available',
             ]);
+            
+            // Broadcast food post update
+            broadcast(new FoodPostUpdated($claim->foodPost))->toOthers();
         }
+
+        // Broadcast claim update
+        broadcast(new ClaimUpdated($claim))->toOthers();
 
         return response()->json([
             'claim' => $claim->fresh()->load(['foodPost.user.profile', 'user.profile']),

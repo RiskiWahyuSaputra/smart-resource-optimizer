@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\FoodPost;
 use Illuminate\Http\Request;
+use App\Events\FoodPostCreated;
+use App\Events\FoodPostUpdated;
 
 class FoodPostController extends Controller
 {
@@ -100,6 +102,9 @@ class FoodPostController extends Controller
             'status' => $validated['status'] ?? 'available',
         ]);
 
+        // Broadcast to marketplace
+        broadcast(new FoodPostCreated($foodPost))->toOthers();
+
         return response()->json([
             'food_post' => $foodPost->load('user.profile'),
         ], 201);
@@ -126,6 +131,9 @@ class FoodPostController extends Controller
         ]);
 
         $foodPost->update($validated);
+
+        // Broadcast to marketplace
+        broadcast(new FoodPostUpdated($foodPost))->toOthers();
 
         return response()->json([
             'food_post' => $foodPost->fresh()->load(['user.profile', 'claims.user.profile']),

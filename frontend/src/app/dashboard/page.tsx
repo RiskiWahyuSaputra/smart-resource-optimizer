@@ -474,8 +474,31 @@ export default function DashboardPage() {
       };
     }
 
+    // 3. Listen for claim updates (restaurant & community)
+    userChannel.listen('.claim.created', () => {
+      console.log('🔔 [Realtime] Klaim baru dibuat');
+      if (user.role === 'restaurant') {
+        void loadIncomingRestaurantClaims();
+      } else if (user.role === 'community') {
+        void loadCommunityClaims();
+      }
+      void loadDashboardOverviewAnalytics();
+    });
+
+    userChannel.listen('.claim.updated', () => {
+      console.log('🔔 [Realtime] Klaim diupdate');
+      if (user.role === 'restaurant') {
+        void loadIncomingRestaurantClaims();
+      } else if (user.role === 'community') {
+        void loadCommunityClaims();
+      }
+      void loadDashboardOverviewAnalytics();
+    });
+
     return () => {
       userChannel.stopListening(".user.verification.updated");
+      userChannel.stopListening('.claim.created');
+      userChannel.stopListening('.claim.updated');
     };
   }, [
     user,

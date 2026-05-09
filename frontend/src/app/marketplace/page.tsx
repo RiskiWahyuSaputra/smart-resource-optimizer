@@ -11,6 +11,7 @@ import {
   type MarketplaceFoodPost,
 } from '@/services/marketplaceService';
 import { useCart } from '@/context/CartContext';
+import { getEchoClient } from '@/lib/reverbClient';
 
 const MapView = dynamic(() => import('@/components/marketplace/MapView'), {
   ssr: false,
@@ -67,6 +68,7 @@ export default function MarketplacePage() {
   const { user } = useAuth();
   const { addItem, updateQuantity, items: cartItems } = useCart();
   const deferredSearchTerm = useDeferredValue(searchTerm);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
 
   const loadFoodPosts = async (search?: string) => {
     setLoading(true);
@@ -90,6 +92,29 @@ export default function MarketplacePage() {
 
     return () => window.clearTimeout(timeoutId);
   }, [deferredSearchTerm]);
+
+  // Realtime updates for marketplace
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const echo = getEchoClient(token);
+    const marketplaceChannel = echo.channel('marketplace');
+
+    marketplaceChannel.listen('.food-post.created', () => {
+      console.log('🔔 [Marketplace] Food post baru ditambahkan');
+      void loadFoodPosts(searchTerm);
+    });
+
+    marketplaceChannel.listen('.food-post.updated', () => {
+      console.log('🔔 [Marketplace] Food post diupdate');
+      void loadFoodPosts(searchTerm);
+    });
+
+    return () => {
+      marketplaceChannel.stopListening('.food-post.created');
+      marketplaceChannel.stopListening('.food-post.updated');
+    };
+  }, [user, token, searchTerm]);
 
   const handleAddToCart = (food: (typeof mappedPosts)[0]) => {
     if (!user) {
