@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import {
   CheckCircle2,
@@ -44,6 +45,15 @@ import {
   type MarketplaceClaim,
   type MarketplaceFoodPost,
 } from '@/services/marketplaceService';
+
+const LocationPicker = dynamic(() => import('@/components/marketplace/LocationPicker'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 w-full bg-slate-100 flex items-center justify-center rounded-xl animate-pulse">
+      <p className="text-slate-400 font-medium">Memuat peta lokasi...</p>
+    </div>
+  ),
+});
 
 type VerificationStatus = 'pending' | 'verified' | 'rejected';
 type VerificationFilter = VerificationStatus | 'all';
@@ -1574,27 +1584,15 @@ export default function DashboardPage() {
                     />
                   </div>
 
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">Latitude</label>
-                    <input
-                      type="number"
-                      step="0.00000001"
-                      value={foodPostForm.lat}
-                      onChange={(event) => handleFoodPostFormChange('lat', event.target.value)}
-                      placeholder="-6.20000000"
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-slate-700">Longitude</label>
-                    <input
-                      type="number"
-                      step="0.00000001"
-                      value={foodPostForm.long}
-                      onChange={(event) => handleFoodPostFormChange('long', event.target.value)}
-                      placeholder="106.80000000"
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500"
+                  <div className="md:col-span-2">
+                    <label className="mb-2 block text-sm font-medium text-slate-700">Titik Lokasi Pengambilan</label>
+                    <LocationPicker
+                      initialLat={foodPostForm.lat ? Number(foodPostForm.lat) : undefined}
+                      initialLng={foodPostForm.long ? Number(foodPostForm.long) : undefined}
+                      onChange={(lat, lng) => {
+                        handleFoodPostFormChange('lat', lat.toString());
+                        handleFoodPostFormChange('long', lng.toString());
+                      }}
                     />
                   </div>
 
