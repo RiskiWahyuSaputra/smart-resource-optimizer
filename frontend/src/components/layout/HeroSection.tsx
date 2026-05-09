@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { useEffect, useRef } from 'react';
-import Link from 'next/link';
-import { ArrowRight, Leaf } from 'lucide-react';
+import { useEffect, useRef } from "react";
+import Link from "next/link";
+import { ArrowRight, Leaf } from "lucide-react";
 
 export default function HeroSection() {
   const bgRef = useRef<HTMLDivElement>(null);
@@ -14,16 +14,20 @@ export default function HeroSection() {
         bgRef.current.style.transform = `translateY(${window.scrollY * 0.4}px)`;
       }
     };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Parallax Background */}
-      <div ref={bgRef} className="absolute inset-0 will-change-transform" style={{ top: '-20%', bottom: '-20%' }}>
+      <div
+        ref={bgRef}
+        className="absolute inset-0 will-change-transform"
+        style={{ top: "-20%", bottom: "-20%" }}
+      >
         <img
-          src="/images/bg-hero.png"
+          src="/images/bg.png"
           alt="Hero Background"
           className="w-full h-full object-cover"
         />
@@ -46,12 +50,12 @@ export default function HeroSection() {
           </div>
 
           <h1 className="text-6xl md:text-8xl font-serif font-bold tracking-tight text-white mb-10 leading-[1.05] animate-fade-in-up drop-shadow-2xl">
-            Ubah{' '}
+            Ubah{" "}
             <span className="text-emerald-400 italic relative inline-block animate-scale-in">
               Kelebihan
               <span className="absolute -bottom-2 left-0 w-full h-3 bg-emerald-400/50 -z-10 animate-expand" />
-            </span>{' '}
-            Menjadi{' '}
+            </span>{" "}
+            Menjadi{" "}
             <span className="text-emerald-400 relative inline-block animate-scale-in-delayed">
               Kebaikan
               <span className="absolute bottom-0 left-0 w-full h-1 bg-emerald-400 animate-slide-in" />
@@ -60,7 +64,9 @@ export default function HeroSection() {
           </h1>
 
           <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed animate-fade-in font-light drop-shadow-lg">
-            Smart Resource Optimizer (SRO) menghubungkan restoran yang memiliki makanan berlebih dengan komunitas yang membutuhkan. Bersama, kita kurangi limbah pangan dan bantu sesama.
+            Smart Resource Optimizer (SRO) menghubungkan restoran yang memiliki
+            makanan berlebih dengan komunitas yang membutuhkan. Bersama, kita
+            kurangi limbah pangan dan bantu sesama.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5 animate-fade-in-up-delayed">

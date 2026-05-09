@@ -76,6 +76,139 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="py-24 bg-slate-50">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-950 mb-4">Cerita dari Komunitas Kami</h2>
+            <p className="text-slate-600 max-w-xl mx-auto text-lg">Dampak nyata dari kolaborasi restoran dan komunitas peduli.</p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-700 font-bold text-xl">
+                  R
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-950">Restoran Padang Sederhana</h4>
+                  <p className="text-sm text-slate-500">Jakarta Selatan</p>
+                </div>
+              </div>
+              <p className="text-slate-600 leading-relaxed italic">
+                "Setiap hari kami punya sisa makanan berkualitas. Dengan SRO, makanan ini sampai ke tangan yang tepat tanpa ribet. Win-win solution!"
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold text-xl">
+                  K
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-950">Komunitas Berbagi Harapan</h4>
+                  <p className="text-sm text-slate-500">Bandung</p>
+                </div>
+              </div>
+              <p className="text-slate-600 leading-relaxed italic">
+                "Platform ini memudahkan kami menemukan donasi makanan terdekat. Sistemnya transparan dan proses verifikasinya membuat semua pihak merasa aman."
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-100 hover:shadow-lg transition-shadow">
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-14 h-14 bg-amber-100 rounded-full flex items-center justify-center text-amber-700 font-bold text-xl">
+                  C
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-950">Catering Nusantara</h4>
+                  <p className="text-sm text-slate-500">Surabaya</p>
+                </div>
+              </div>
+              <p className="text-slate-600 leading-relaxed italic">
+                "Setelah event besar, sisa makanan selalu jadi masalah. Sekarang tinggal posting di SRO, dalam hitungan jam sudah ada yang ambil. Luar biasa!"
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Partners */}
+      <section className="py-16 bg-white border-y border-slate-100">
+        <div className="container mx-auto px-6">
+          <p className="text-center text-sm font-semibold uppercase tracking-widest text-slate-400 mb-8">Dipercaya Oleh</p>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60">
+            <div className="text-2xl font-bold text-slate-700">Restoran A</div>
+            <div className="text-2xl font-bold text-slate-700">Catering B</div>
+            <div className="text-2xl font-bold text-slate-700">Hotel C</div>
+            <div className="text-2xl font-bold text-slate-700">Komunitas D</div>
+            <div className="text-2xl font-bold text-slate-700">Yayasan E</div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="py-24 bg-slate-50">
+        <div className="container mx-auto px-6 max-w-4xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-950 mb-4">Pertanyaan Umum</h2>
+            <p className="text-slate-600 text-lg">Jawaban cepat untuk pertanyaan yang sering diajukan.</p>
+          </div>
+
+          <div className="space-y-4">
+            <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <summary className="cursor-pointer px-6 py-5 font-semibold text-slate-950 hover:bg-slate-50 transition-colors list-none flex items-center justify-between">
+                <span>Apakah ada biaya untuk bergabung?</span>
+                <span className="text-emerald-600 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                Tidak ada biaya sama sekali. SRO sepenuhnya gratis untuk restoran dan komunitas yang ingin bergabung dalam misi mengurangi food waste.
+              </div>
+            </details>
+
+            <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <summary className="cursor-pointer px-6 py-5 font-semibold text-slate-950 hover:bg-slate-50 transition-colors list-none flex items-center justify-between">
+                <span>Bagaimana proses verifikasi dilakukan?</span>
+                <span className="text-emerald-600 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                Setelah registrasi, Anda perlu mengunggah dokumen pendukung (SIUP untuk restoran, dokumen legalitas untuk komunitas). Tim kami akan melakukan verifikasi dalam 1-2 hari kerja.
+              </div>
+            </details>
+
+            <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <summary className="cursor-pointer px-6 py-5 font-semibold text-slate-950 hover:bg-slate-50 transition-colors list-none flex items-center justify-between">
+                <span>Apakah makanan yang dibagikan aman dikonsumsi?</span>
+                <span className="text-emerald-600 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                Ya. Semua makanan yang diposting harus memenuhi standar keamanan pangan. Restoran wajib mencantumkan waktu kadaluarsa dan kondisi makanan. Kami juga memiliki sistem rating dan review.
+              </div>
+            </details>
+
+            <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <summary className="cursor-pointer px-6 py-5 font-semibold text-slate-950 hover:bg-slate-50 transition-colors list-none flex items-center justify-between">
+                <span>Bagaimana cara kerja sistem pickup?</span>
+                <span className="text-emerald-600 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                Komunitas mengajukan klaim melalui platform, restoran menyetujui, lalu komunitas datang ke lokasi sesuai jadwal yang disepakati. Semua tercatat dalam sistem untuk transparansi.
+              </div>
+            </details>
+
+            <details className="group bg-white rounded-2xl border border-slate-200 overflow-hidden">
+              <summary className="cursor-pointer px-6 py-5 font-semibold text-slate-950 hover:bg-slate-50 transition-colors list-none flex items-center justify-between">
+                <span>Apakah bisa untuk wilayah di luar Jakarta?</span>
+                <span className="text-emerald-600 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="px-6 pb-5 text-slate-600 leading-relaxed">
+                Tentu! SRO beroperasi di seluruh Indonesia. Sistem peta kami memudahkan matching antara restoran dan komunitas di area yang sama, di mana pun lokasinya.
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Footer */}
       <section className="py-20 bg-emerald-950 text-white">
         <div className="container mx-auto px-6 text-center">
