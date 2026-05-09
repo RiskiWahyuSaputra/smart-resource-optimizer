@@ -2,42 +2,37 @@
 
 namespace App\Events;
 
+use App\Models\User;
 use Illuminate\Broadcasting\InteractsWithSockets;
-
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UserVerificationUpdated implements ShouldBroadcast
+class UserRegistered implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public function __construct(
-        public int $userId,
-        public string $verificationStatus
-    ) {
+    public function __construct(public User $user)
+    {
     }
 
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('user.' . $this->userId),
             new PrivateChannel('admin'),
         ];
     }
 
     public function broadcastAs(): string
     {
-        return 'user.verification.updated';
+        return 'user.registered';
     }
 
     public function broadcastWith(): array
     {
         return [
-            'user_id' => $this->userId,
-            'verification_status' => $this->verificationStatus,
+            'user' => $this->user->load('profile'),
         ];
     }
 }
-

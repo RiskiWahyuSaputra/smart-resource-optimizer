@@ -345,8 +345,15 @@ export default function DashboardPage() {
     // 2. Listen for admin-wide updates
     if (user.role === 'admin') {
       const adminChannel = echo.private('admin');
+      
       adminChannel.listen('.user.verification.updated', (data: unknown) => {
         console.log('Admin: User verification updated (realtime):', data);
+        void loadAllVerifications();
+        void loadDashboardOverviewAnalytics();
+      });
+
+      adminChannel.listen('.user.registered', (data: unknown) => {
+        console.log('Admin: New user registered (realtime):', data);
         void loadAllVerifications();
         void loadDashboardOverviewAnalytics();
       });
@@ -354,6 +361,7 @@ export default function DashboardPage() {
       return () => {
         userChannel.stopListening('.user.verification.updated');
         adminChannel.stopListening('.user.verification.updated');
+        adminChannel.stopListening('.user.registered');
       };
     }
 

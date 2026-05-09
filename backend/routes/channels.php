@@ -2,11 +2,11 @@
 
 use Illuminate\Support\Facades\Broadcast;
 
-Broadcast::channel('private-user.{id}', function ($user, $id) {
+Broadcast::channel('user.{id}', function ($user, $id) {
     return (int) $user->id === (int) $id;
 });
 
-Broadcast::channel('private-admin', function ($user) {
+Broadcast::channel('admin', function ($user) {
     return (string) $user->role === 'admin';
 });
 
