@@ -11,6 +11,8 @@ interface FoodCardProps {
     expiryTime: string;
     image: string;
     description?: string;
+    lat?: number;
+    lng?: number;
   };
   actionLabel?: string;
   onAction?: () => void;

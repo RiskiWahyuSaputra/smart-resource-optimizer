@@ -70,6 +70,15 @@ const MapView: React.FC<MapViewProps> = ({
                       {post.pickupAddress}
                     </p>
                   )}
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${post.lat},${post.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-3 inline-flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-blue-600 !text-white text-sm font-bold rounded-lg hover:bg-blue-700 transition-colors shadow-md"
+                  >
+                    <span className="text-base">📍</span>
+                    Buka di Google Maps
+                  </a>
                 </div>
               </div>
             </Popup>
