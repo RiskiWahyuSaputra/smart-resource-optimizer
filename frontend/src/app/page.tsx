@@ -1,8 +1,58 @@
+'use client';
+
 import Link from "next/link";
 import { Leaf, ShieldCheck, Users, MapPin } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { getFoodPosts, type MarketplaceFoodPost } from "@/services/marketplaceService";
+
+const MapView = dynamic(() => import('@/components/marketplace/MapView'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-[500px] w-full bg-slate-100 flex items-center justify-center rounded-xl animate-pulse">
+      <p className="text-slate-400 font-medium">Memuat peta lokasi makanan...</p>
+    </div>
+  ),
+});
+
+function normalizeCoordinate(value: number | string | null | undefined, fallback: number) {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+  return fallback;
+}
 
 export default function Home() {
+  const [foodPosts, setFoodPosts] = useState<MarketplaceFoodPost[]>([]);
+
+  useEffect(() => {
+    const loadFoodPosts = async () => {
+      try {
+        const data = await getFoodPosts();
+        setFoodPosts(data.food_posts ?? []);
+      } catch (error) {
+        console.error('Failed to load food posts:', error);
+        setFoodPosts([]); // Set empty array on error
+      }
+    };
+    void loadFoodPosts();
+  }, []);
+
+  const mappedPosts = foodPosts
+    .filter((post) => post.status === 'available')
+    .map((post) => ({
+      id: post.id,
+      title: post.title,
+      restaurantName: post.user?.profile?.name || post.user?.name || 'Restoran',
+      lat: normalizeCoordinate(post.lat, -6.2088),
+      lng: normalizeCoordinate(post.long, 106.8456),
+      pickupAddress: post.pickup_address,
+      storeImage: post.image_url,
+    }));
+
   return (
     <div className="flex flex-col min-h-screen bg-white text-slate-900 overflow-hidden">
       <HeroSection />
@@ -133,16 +183,31 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Featured Partners */}
-      <section className="py-16 bg-white border-y border-slate-100">
+      {/* Live Map - Makanan Tersedia */}
+      <section className="py-24 bg-white">
         <div className="container mx-auto px-6">
-          <p className="text-center text-sm font-semibold uppercase tracking-widest text-slate-400 mb-8">Dipercaya Oleh</p>
-          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-12 opacity-60">
-            <div className="text-2xl font-bold text-slate-700">Restoran A</div>
-            <div className="text-2xl font-bold text-slate-700">Catering B</div>
-            <div className="text-2xl font-bold text-slate-700">Hotel C</div>
-            <div className="text-2xl font-bold text-slate-700">Komunitas D</div>
-            <div className="text-2xl font-bold text-slate-700">Yayasan E</div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-950 mb-4">Makanan Tersedia di Sekitar Anda</h2>
+            <p className="text-slate-600 max-w-xl mx-auto text-lg">Lihat lokasi makanan yang tersedia secara real-time di peta interaktif.</p>
+          </div>
+          
+          <div className="rounded-3xl overflow-hidden border border-slate-200 shadow-lg">
+            <MapView 
+              posts={mappedPosts}
+            />
+          </div>
+
+          <div className="text-center mt-8">
+            <Link 
+              href="/marketplace" 
+              className="inline-flex items-center gap-2 px-8 py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl"
+            >
+              <MapPin className="w-5 h-5" />
+              Lihat Map Lengkap di Marketplace
+            </Link>
+            <p className="mt-4 text-sm text-slate-500">
+              Login diperlukan untuk mengklaim makanan
+            </p>
           </div>
         </div>
       </section>
