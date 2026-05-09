@@ -122,8 +122,8 @@ export default function MarketplacePage() {
     location: post.pickup_address,
     expiryTime: formatRemainingTime(post.available_until),
     image: post.image_url || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=400&h=300&auto=format&fit=crop',
-    lat: normalizeCoordinate(post.lat, -6.2088),
-    lng: normalizeCoordinate(post.long, 106.8456),
+    lat: normalizeCoordinate(post.lat, -5.4292), // Bandar Lampung
+    lng: normalizeCoordinate(post.long, 105.2619), // Bandar Lampung
     pickupAddress: post.pickup_address,
     storeImage: post.user.profile?.store_image_url,
   }));
@@ -131,7 +131,7 @@ export default function MarketplacePage() {
   const mapCenter =
     mappedPosts.length > 0
       ? ([mappedPosts[0].lat, mappedPosts[0].lng] as [number, number])
-      : ([-6.2088, 106.8456] as [number, number]);
+      : ([-5.4292, 105.2619] as [number, number]); // Bandar Lampung
 
   const canClaim = user?.role === 'community' || user?.role === 'admin';
 

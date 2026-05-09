@@ -47,8 +47,8 @@ export default function Home() {
       id: post.id,
       title: post.title,
       restaurantName: post.user?.profile?.name || post.user?.name || 'Restoran',
-      lat: normalizeCoordinate(post.lat, -6.2088),
-      lng: normalizeCoordinate(post.long, 106.8456),
+      lat: normalizeCoordinate(post.lat, -5.4292), // Bandar Lampung
+      lng: normalizeCoordinate(post.long, 105.2619), // Bandar Lampung
       pickupAddress: post.pickup_address,
       storeImage: post.image_url,
     }));

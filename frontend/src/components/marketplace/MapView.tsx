@@ -33,7 +33,7 @@ interface MapViewProps {
 
 const MapView: React.FC<MapViewProps> = ({ 
   posts, 
-  center = [-6.2088, 106.8456], // Jakarta default
+  center = [-5.4292, 105.2619], // Bandar Lampung default
   zoom = 13 
 }) => {
   return (
