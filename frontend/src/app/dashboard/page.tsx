@@ -42,7 +42,6 @@ import {
   getMyFoodPosts,
   updateClaimStatus,
   updateFoodPost,
-  type FoodPostPayload,
   type MarketplaceClaim,
   type MarketplaceFoodPost,
 } from '@/services/marketplaceService';
@@ -59,6 +58,14 @@ const LocationPicker = dynamic(() => import('@/components/marketplace/LocationPi
 type VerificationStatus = 'pending' | 'verified' | 'rejected';
 type VerificationFilter = VerificationStatus | 'all';
 type FoodPostStatus = 'available' | 'claimed' | 'completed' | 'expired';
+type ActiveTab =
+  | 'overview'
+  | 'verification'
+  | 'posts'
+  | 'incoming-claims'
+  | 'claims'
+  | 'history'
+  | 'settings';
 
 type VerificationUser = {
   id: number;
@@ -99,6 +106,40 @@ type FoodPostFormState = {
   image_url: string;
   image_file: File | null;
 };
+
+type OverviewSnapshotItem = {
+  label: string;
+  value: string;
+  caption: string;
+  tone: DashboardStatTone;
+  icon: typeof Clock;
+};
+
+type OverviewRecentItem = {
+  id: string;
+  title: string;
+  meta: string;
+  badge: string;
+  badgeClassName: string;
+};
+
+type OverviewFocus =
+  | {
+      mode: 'tab';
+      eyebrow: string;
+      title: string;
+      description: string;
+      actionLabel: string;
+      targetTab: ActiveTab;
+    }
+  | {
+      mode: 'link';
+      eyebrow: string;
+      title: string;
+      description: string;
+      actionLabel: string;
+      href: string;
+    };
 
 const statusConfig: Record<
   VerificationStatus,
@@ -222,6 +263,39 @@ function formatClaimStatus(status: MarketplaceClaim['status']) {
   return config[status];
 }
 
+function formatVerificationStatusLabel(status: VerificationStatus) {
+  const config: Record<VerificationStatus, string> = {
+    pending: 'Pending',
+    verified: 'Terverifikasi',
+    rejected: 'Ditolak',
+  };
+
+  return config[status];
+}
+
+function getFoodPostStatusBadgeClass(status: FoodPostStatus) {
+  const config: Record<FoodPostStatus, string> = {
+    available: 'bg-emerald-50 text-emerald-700',
+    claimed: 'bg-amber-50 text-amber-700',
+    completed: 'bg-slate-100 text-slate-700',
+    expired: 'bg-rose-50 text-rose-700',
+  };
+
+  return config[status];
+}
+
+function getClaimStatusBadgeClass(status: MarketplaceClaim['status']) {
+  const config: Record<MarketplaceClaim['status'], string> = {
+    pending: 'bg-amber-50 text-amber-700',
+    approved: 'bg-emerald-50 text-emerald-700',
+    completed: 'bg-slate-100 text-slate-700',
+    cancelled: 'bg-rose-50 text-rose-700',
+    rejected: 'bg-rose-50 text-rose-700',
+  };
+
+  return config[status];
+}
+
 function getToneClasses(tone: DashboardStatTone) {
   const tones: Record<DashboardStatTone, { surface: string; text: string; bar: string }> = {
     emerald: {
@@ -267,7 +341,7 @@ function getToneClasses(tone: DashboardStatTone) {
 export default function DashboardPage() {
   const { user, token, loading, logout, checkAuth } = useAuth();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
   const [verificationUsers, setVerificationUsers] = useState<VerificationUser[]>([]);
   const [verificationCounts, setVerificationCounts] = useState<VerificationCounts>({
     pending: 0,
@@ -300,6 +374,7 @@ export default function DashboardPage() {
   const [incomingClaimsError, setIncomingClaimsError] = useState('');
   const [incomingClaimActionId, setIncomingClaimActionId] = useState<number | null>(null);
   const [incomingClaimFeedback, setIncomingClaimFeedback] = useState('');
+  const [overviewTimestamp, setOverviewTimestamp] = useState(() => Date.now());
   const [foodPostForm, setFoodPostForm] = useState<FoodPostFormState>({
     title: '',
     description: '',
@@ -352,7 +427,8 @@ export default function DashboardPage() {
 
     // 1. Listen for user-specific verification updates
     const userChannel = echo.private(`user.${user.id}`);
-    userChannel.listen('.user.verification.updated', (data: any) => {
+    userChannel.listen('.user.verification.updated', (event: unknown) => {
+      const data = event;
       console.log('🔔 [Realtime] Status verifikasi Anda diperbarui:', data);
       void checkAuth(); 
     });
@@ -361,13 +437,15 @@ export default function DashboardPage() {
     if (user.role === 'admin') {
       const adminChannel = echo.private('admin');
       
-      adminChannel.listen('.user.verification.updated', (data: any) => {
+      adminChannel.listen('.user.verification.updated', (event: unknown) => {
+        const data = event;
         console.log('🔔 [Admin] Perubahan verifikasi user (realtime):', data);
         void loadAllVerifications();
         void loadDashboardOverviewAnalytics();
       });
 
-      adminChannel.listen('.user.registered', (data: any) => {
+      adminChannel.listen('.user.registered', (event: unknown) => {
+        const data = event;
         console.log('🔔 [Admin] User baru terdaftar (realtime):', data);
         void loadAllVerifications();
         void loadDashboardOverviewAnalytics();
@@ -495,6 +573,16 @@ export default function DashboardPage() {
     void loadCommunityClaims();
   }, [user]);
 
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setOverviewTimestamp(Date.now());
+    }, 60 * 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50">
@@ -540,6 +628,262 @@ export default function DashboardPage() {
   const pendingVerificationUsers = verificationUsers
     .filter((verificationUser) => verificationUser.profile?.verification_status === 'pending')
     .slice(0, 3);
+  const activeRestaurantPosts = myFoodPosts.filter(
+    (foodPost) => foodPost.status === 'available' || foodPost.status === 'claimed'
+  );
+  const expiringSoonFoodPosts = activeRestaurantPosts.filter((foodPost) => {
+    const diffInMs = new Date(foodPost.available_until).getTime() - overviewTimestamp;
+    return diffInMs > 0 && diffInMs <= 6 * 60 * 60 * 1000;
+  });
+  const pendingIncomingRestaurantClaims = incomingClaims.filter(
+    (claim) => claim.status === 'pending'
+  );
+  const activeCommunityClaims = myClaims.filter(
+    (claim) => claim.status === 'pending' || claim.status === 'approved'
+  );
+  const completedCommunityClaims = myClaims.filter((claim) => claim.status === 'completed');
+  const totalVerificationRequests =
+    verificationCounts.pending + verificationCounts.verified + verificationCounts.rejected;
+  const verificationApprovalRate =
+    totalVerificationRequests === 0
+      ? 0
+      : Math.round((verificationCounts.verified / totalVerificationRequests) * 100);
+  const statusTone: DashboardStatTone =
+    currentStatus === 'verified'
+      ? 'emerald'
+      : currentStatus === 'rejected'
+      ? 'rose'
+      : 'amber';
+  const overviewSnapshotItems: OverviewSnapshotItem[] = isAdmin
+    ? [
+        {
+          label: 'Pending Review',
+          value: formatNumber(verificationCounts.pending),
+          caption: 'akun menunggu keputusan admin',
+          tone: 'amber',
+          icon: Clock,
+        },
+        {
+          label: 'User Verified',
+          value: formatNumber(verificationCounts.verified),
+          caption: 'akun sudah lolos proses verifikasi',
+          tone: 'emerald',
+          icon: ShieldCheck,
+        },
+        {
+          label: 'Approval Rate',
+          value: `${verificationApprovalRate}%`,
+          caption: 'tingkat akun yang berhasil diverifikasi',
+          tone: 'blue',
+          icon: CheckCircle2,
+        },
+      ]
+    : isRestaurant
+    ? [
+        {
+          label: 'Post Aktif',
+          value: formatNumber(activeRestaurantPosts.length),
+          caption: 'food post yang masih bisa diproses',
+          tone: 'emerald',
+          icon: Utensils,
+        },
+        {
+          label: 'Klaim Pending',
+          value: formatNumber(pendingIncomingRestaurantClaims.length),
+          caption: 'klaim masuk yang belum Anda respons',
+          tone: 'amber',
+          icon: Inbox,
+        },
+        {
+          label: 'Status Akun',
+          value: formatVerificationStatusLabel(currentStatus),
+          caption: 'kelayakan akun untuk memakai fitur penuh',
+          tone: statusTone,
+          icon: ShieldCheck,
+        },
+      ]
+    : [
+        {
+          label: 'Klaim Aktif',
+          value: formatNumber(activeCommunityClaims.length),
+          caption: 'klaim yang masih berjalan saat ini',
+          tone: 'emerald',
+          icon: ShoppingBag,
+        },
+        {
+          label: 'Klaim Selesai',
+          value: formatNumber(completedCommunityClaims.length),
+          caption: 'distribusi yang sudah selesai diterima',
+          tone: 'blue',
+          icon: CheckCircle2,
+        },
+        {
+          label: 'Status Akun',
+          value: formatVerificationStatusLabel(currentStatus),
+          caption: 'status verifikasi akun komunitas Anda',
+          tone: statusTone,
+          icon: ShieldCheck,
+        },
+      ];
+  const overviewFocus: OverviewFocus = isAdmin
+    ? verificationCounts.pending > 0
+      ? {
+          mode: 'tab',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Percepat antrean verifikasi',
+          description: `${formatNumber(
+            verificationCounts.pending
+          )} akun masih menunggu keputusan. Mulai dari dokumen yang baru masuk agar antrean tetap pendek.`,
+          actionLabel: 'Buka Verifikasi',
+          targetTab: 'verification',
+        }
+      : {
+          mode: 'tab',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Antrean sedang bersih',
+          description:
+            'Tidak ada antrean pending saat ini. Gunakan waktu ini untuk mengecek histori dan konsistensi aktivitas platform.',
+          actionLabel: 'Lihat Riwayat',
+          targetTab: 'history',
+        }
+    : isRestaurant
+    ? currentStatus !== 'verified'
+      ? {
+          mode: 'link',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Pantau status akun restoran',
+          description:
+            'Akun Anda belum aktif penuh. Sambil menunggu proses verifikasi, Anda tetap bisa memantau marketplace dan melihat ringkasan aktivitas.',
+          actionLabel: 'Buka Marketplace',
+          href: '/marketplace',
+        }
+      : pendingIncomingRestaurantClaims.length > 0
+      ? {
+          mode: 'tab',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Ada klaim baru yang perlu direspons',
+          description: `${formatNumber(
+            pendingIncomingRestaurantClaims.length
+          )} klaim sedang menunggu keputusan Anda. Respons cepat membantu distribusi tetap lancar.`,
+          actionLabel: 'Tinjau Klaim Masuk',
+          targetTab: 'incoming-claims',
+        }
+      : activeRestaurantPosts.length === 0
+      ? {
+          mode: 'tab',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Saatnya buat food post baru',
+          description:
+            'Belum ada food post aktif saat ini. Menambahkan stok baru akan membuat dashboard terasa hidup sekaligus membuka peluang distribusi.',
+          actionLabel: 'Kelola Food Post',
+          targetTab: 'posts',
+        }
+      : expiringSoonFoodPosts.length > 0
+      ? {
+          mode: 'tab',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Beberapa stok akan segera berakhir',
+          description: `${formatNumber(
+            expiringSoonFoodPosts.length
+          )} food post akan berakhir dalam 6 jam. Cek kembali klaim masuk atau buat stok pengganti.`,
+          actionLabel: 'Lihat Food Post',
+          targetTab: 'posts',
+        }
+      : {
+          mode: 'tab',
+          eyebrow: 'Fokus Hari Ini',
+          title: 'Distribusi restoran berjalan stabil',
+          description:
+            'Food post aktif Anda sudah berjalan baik. Gunakan dashboard ini untuk menjaga ritme posting dan pickup tetap konsisten.',
+          actionLabel: 'Kelola Food Post',
+          targetTab: 'posts',
+        }
+    : currentStatus !== 'verified'
+    ? {
+        mode: 'link',
+        eyebrow: 'Fokus Hari Ini',
+        title: 'Akun komunitas masih dalam proses',
+        description:
+          'Status akun Anda belum penuh, tetapi Anda masih bisa menjelajahi marketplace dan memantau klaim yang sudah dibuat.',
+        actionLabel: 'Buka Marketplace',
+        href: '/marketplace',
+      }
+    : activeCommunityClaims.length > 0
+    ? {
+        mode: 'tab',
+        eyebrow: 'Fokus Hari Ini',
+        title: 'Pantau pickup klaim yang sedang aktif',
+        description: `${formatNumber(
+          activeCommunityClaims.length
+        )} klaim masih berjalan. Pastikan pickup dilakukan sebelum batas waktu berakhir.`,
+        actionLabel: 'Lihat Klaim Saya',
+        targetTab: 'claims',
+      }
+    : {
+        mode: 'link',
+        eyebrow: 'Fokus Hari Ini',
+        title: 'Cari distribusi baru di sekitar Anda',
+        description:
+          'Belum ada klaim aktif saat ini. Marketplace bisa menjadi sumber utama untuk mengisi dashboard dengan aktivitas yang relevan.',
+        actionLabel: 'Cari Makanan',
+        href: '/marketplace',
+      };
+  const overviewRecentItems: OverviewRecentItem[] = isAdmin
+    ? pendingVerificationUsers.map((verificationUser) => ({
+        id: `verification-${verificationUser.id}`,
+        title: verificationUser.profile?.name || verificationUser.name,
+        meta: `${formatRole(verificationUser.role)} • masuk ${formatDate(
+          verificationUser.created_at
+        )}`,
+        badge: 'Pending',
+        badgeClassName: 'bg-amber-50 text-amber-700',
+      }))
+    : isRestaurant
+    ? (pendingIncomingRestaurantClaims.length > 0
+        ? pendingIncomingRestaurantClaims.slice(0, 3).map((claim) => ({
+            id: `incoming-claim-${claim.id}`,
+            title: claim.food_post.title,
+            meta: `${claim.user?.profile?.name || claim.user?.name || 'Komunitas'} • ${formatDate(
+              claim.created_at
+            )}`,
+            badge: formatClaimStatus(claim.status),
+            badgeClassName: getClaimStatusBadgeClass(claim.status),
+          }))
+        : myFoodPosts.slice(0, 3).map((foodPost) => ({
+            id: `food-post-${foodPost.id}`,
+            title: foodPost.title,
+            meta: `${foodPost.quantity} ${foodPost.quantity_unit} • ${
+              foodPost.status === 'expired'
+                ? 'sudah berakhir'
+                : `berakhir dalam ${formatFoodPostExpiry(foodPost.available_until)}`
+            }`,
+            badge: formatFoodPostStatus(foodPost.status),
+            badgeClassName: getFoodPostStatusBadgeClass(foodPost.status),
+          })))
+    : myClaims.slice(0, 3).map((claim) => ({
+        id: `claim-${claim.id}`,
+        title: claim.food_post.title,
+        meta: `${claim.food_post.user.profile?.name || claim.food_post.user.name} • ${formatDate(
+          claim.created_at
+        )}`,
+        badge: formatClaimStatus(claim.status),
+        badgeClassName: getClaimStatusBadgeClass(claim.status),
+      }));
+  const overviewRecentTitle = isAdmin
+    ? 'Akun Terbaru'
+    : isRestaurant
+    ? 'Aktivitas Restoran'
+    : 'Aktivitas Klaim';
+  const overviewRecentDescription = isAdmin
+    ? 'Daftar cepat akun yang paling perlu perhatian sekarang.'
+    : isRestaurant
+    ? 'Perubahan paling relevan untuk operasional distribusi Anda.'
+    : 'Ringkasan klaim terbaru agar mudah dipantau dari satu tempat.';
+  const overviewRecentEmptyState = isAdmin
+    ? 'Belum ada akun pending yang perlu diperiksa.'
+    : isRestaurant
+    ? 'Belum ada aktivitas restoran yang tercatat. Food post baru akan muncul di sini.'
+    : 'Belum ada klaim terbaru. Aktivitas Anda akan tampil di panel ini.';
   const closeDocumentPreview = () => setDocumentPreview(null);
 
   const handleOpenStoreImage = (user: VerificationUser) => {
@@ -1382,6 +1726,129 @@ export default function DashboardPage() {
                         </div>
                       </>
                     )}
+                  </section>
+                </div>
+
+                <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+                  <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                          Snapshot Operasional
+                        </p>
+                        <h3 className="mt-2 text-xl font-bold text-slate-950">
+                          Ringkasan yang bikin dashboard terasa penuh
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          Metrik kecil ini membantu Anda membaca kondisi dashboard tanpa harus
+                          pindah tab.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                      {overviewSnapshotItems.map((item) => {
+                        const toneClasses = getToneClasses(item.tone);
+                        const ItemIcon = item.icon;
+
+                        return (
+                          <article
+                            key={item.label}
+                            className="rounded-[28px] border border-slate-200 bg-slate-50 p-5"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  {item.label}
+                                </p>
+                                <p className="mt-4 text-2xl font-bold text-slate-950 sm:text-3xl">
+                                  {item.value}
+                                </p>
+                              </div>
+                              <span
+                                className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl ${toneClasses.surface}`}
+                              >
+                                <ItemIcon className="h-5 w-5" />
+                              </span>
+                            </div>
+                            <p className="mt-4 text-sm leading-6 text-slate-500">{item.caption}</p>
+                          </article>
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-6 overflow-hidden rounded-[28px] bg-slate-950 p-6 text-white">
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300">
+                        {overviewFocus.eyebrow}
+                      </p>
+                      <div className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="max-w-2xl">
+                          <h4 className="text-2xl font-bold">{overviewFocus.title}</h4>
+                          <p className="mt-2 text-sm leading-7 text-white/70">
+                            {overviewFocus.description}
+                          </p>
+                        </div>
+
+                        {overviewFocus.mode === 'link' ? (
+                          <Link
+                            href={overviewFocus.href}
+                            className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-50"
+                          >
+                            {overviewFocus.actionLabel}
+                          </Link>
+                        ) : (
+                          <button
+                            onClick={() => setActiveTab(overviewFocus.targetTab)}
+                            className="inline-flex items-center justify-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-emerald-50"
+                          >
+                            {overviewFocus.actionLabel}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                          Activity Feed
+                        </p>
+                        <h3 className="mt-2 text-xl font-bold text-slate-950">
+                          {overviewRecentTitle}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {overviewRecentDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 space-y-3">
+                      {overviewRecentItems.length > 0 ? (
+                        overviewRecentItems.map((item) => (
+                          <article
+                            key={item.id}
+                            className="rounded-2xl border border-slate-200 bg-slate-50 p-4 transition hover:border-emerald-200 hover:bg-white"
+                          >
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="font-semibold text-slate-950">{item.title}</p>
+                                <p className="mt-1 text-sm leading-6 text-slate-500">{item.meta}</p>
+                              </div>
+                              <span
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${item.badgeClassName}`}
+                              >
+                                {item.badge}
+                              </span>
+                            </div>
+                          </article>
+                        ))
+                      ) : (
+                        <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-8 text-center text-sm leading-6 text-slate-500">
+                          {overviewRecentEmptyState}
+                        </div>
+                      )}
+                    </div>
                   </section>
                 </div>
               </>

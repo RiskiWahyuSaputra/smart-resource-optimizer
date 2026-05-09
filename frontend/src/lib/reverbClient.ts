@@ -8,10 +8,10 @@ if (typeof window !== 'undefined') {
   (window as any).Pusher = Pusher;
 }
 
-let echo: Echo | null = null;
+let echo: Echo<'reverb'> | null = null;
 let currentToken: string | null = null;
 
-export function getEchoClient(token: string): Echo {
+export function getEchoClient(token: string): Echo<'reverb'> {
   if (echo && currentToken === token) return echo;
   
   if (echo) {
@@ -27,7 +27,7 @@ export function getEchoClient(token: string): Echo {
   const port = Number(process.env.NEXT_PUBLIC_REVERB_PORT || 8080);
   const scheme = process.env.NEXT_PUBLIC_REVERB_SCHEME || "http";
 
-  echo = new Echo({
+  echo = new Echo<'reverb'>({
     broadcaster: "reverb",
 
     key: process.env.NEXT_PUBLIC_REVERB_APP_KEY || "local",
