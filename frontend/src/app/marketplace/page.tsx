@@ -61,6 +61,8 @@ export default function MarketplacePage() {
   const [error, setError] = useState('');
   const [claimingId, setClaimingId] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
   const { user } = useAuth();
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
@@ -71,6 +73,7 @@ export default function MarketplacePage() {
     try {
       const data = await getFoodPosts(search);
       setFoodPosts(data.food_posts ?? []);
+      setCurrentPage(1); // Reset to first page on new data/search
     } catch {
       setError('Gagal memuat stok makanan. Coba lagi beberapa saat.');
     } finally {
@@ -136,6 +139,12 @@ export default function MarketplacePage() {
       : ([-6.2088, 106.8456] as [number, number]);
 
   const canClaim = user?.role === 'community' || user?.role === 'admin';
+
+  const totalPages = Math.ceil(mappedPosts.length / itemsPerPage);
+  const paginatedPosts = mappedPosts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex flex-col">
@@ -234,22 +243,60 @@ export default function MarketplacePage() {
               </p>
             </div>
           ) : (
-            <div className={`grid gap-6 ${viewMode === 'list' ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1'}`}>
-              {mappedPosts.map((food) => (
-                <FoodCard
-                  key={food.id}
-                  food={food}
-                  actionLabel={
-                    canClaim ? (claimingId === food.id ? 'Memproses...' : 'Klaim Sekarang') : 'Login untuk Klaim'
-                  }
-                  actionDisabled={!canClaim || claimingId === food.id}
-                  onAction={() => {
-                    if (canClaim) {
-                      void handleClaim(food.id);
+            <div className="flex flex-col gap-8">
+              <div className={`grid gap-4 sm:gap-6 ${viewMode === 'list' ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' : 'grid-cols-1 sm:grid-cols-2'}`}>
+                {paginatedPosts.map((food) => (
+                  <FoodCard
+                    key={food.id}
+                    food={food}
+                    actionLabel={
+                      canClaim ? (claimingId === food.id ? 'Memproses...' : 'Klaim Sekarang') : 'Login untuk Klaim'
                     }
-                  }}
-                />
-              ))}
+                    actionDisabled={!canClaim || claimingId === food.id}
+                    onAction={() => {
+                      if (canClaim) {
+                        void handleClaim(food.id);
+                      }
+                    }}
+                  />
+                ))}
+              </div>
+
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 py-4">
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors"
+                  >
+                    Prev
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCurrentPage(i + 1)}
+                        className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
+                          currentPage === i + 1
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100'
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg border border-slate-200 text-sm font-medium disabled:opacity-50 hover:bg-slate-50 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
