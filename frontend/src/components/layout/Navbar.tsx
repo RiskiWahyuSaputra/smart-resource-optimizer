@@ -73,6 +73,7 @@ const Navbar = () => {
       ];
 
   return (
+    <>
     <nav className={cn(
       "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
       useSolidNavbar
@@ -244,13 +245,14 @@ const Navbar = () => {
           </div>
         </div>
       </div>
+    </nav>
 
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         onConfirm={handleConfirmClaims}
       />
-    </nav>
+    </>
   );
 };
 

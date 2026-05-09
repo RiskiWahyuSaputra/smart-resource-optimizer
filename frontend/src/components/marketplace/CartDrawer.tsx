@@ -19,7 +19,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, onConfirm }) =
       {/* Backdrop */}
       <div
         className={clsx(
-          "fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] transition-opacity duration-300",
+          "fixed inset-0 bg-black/40 backdrop-blur-sm z-[9998] transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -28,7 +28,7 @@ const CartDrawer: React.FC<CartDrawerProps> = ({ isOpen, onClose, onConfirm }) =
       {/* Drawer */}
       <div
         className={clsx(
-          "fixed top-0 right-0 h-full w-full max-w-md bg-white z-[70] shadow-2xl transition-transform duration-300 ease-in-out flex flex-col",
+          "fixed top-0 right-0 h-full w-full max-w-md bg-white z-[9999] shadow-2xl transition-transform duration-300 ease-in-out flex flex-col",
           isOpen ? "translate-x-0" : "translate-x-full"
         )}
       >
