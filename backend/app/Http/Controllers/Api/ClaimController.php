@@ -69,8 +69,13 @@ class ClaimController extends Controller
             'status' => 'pending',
         ]);
 
+        // Kurangi quantity food post
+        $newQuantity = $foodPost->quantity - $validated['quantity'];
+        
+        // Update quantity dan status
         $foodPost->update([
-            'status' => 'claimed',
+            'quantity' => $newQuantity,
+            'status' => $newQuantity <= 0 ? 'claimed' : 'available',
         ]);
 
         return response()->json([
@@ -99,19 +104,24 @@ class ClaimController extends Controller
         ]);
 
         if ($validated['status'] === 'approved') {
-            $claim->foodPost->update([
-                'status' => 'claimed',
-            ]);
+            // Jangan ubah status, biarkan tetap available jika masih ada sisa
+            // Status sudah diatur saat claim dibuat berdasarkan quantity
         }
 
         if ($validated['status'] === 'completed') {
-            $claim->foodPost->update([
-                'status' => 'completed',
-            ]);
+            // Hanya ubah ke completed jika memang sudah selesai pickup
+            // Cek apakah masih ada quantity tersisa
+            if ($claim->foodPost->quantity <= 0) {
+                $claim->foodPost->update([
+                    'status' => 'completed',
+                ]);
+            }
         }
 
         if (in_array($validated['status'], ['rejected', 'cancelled'], true)) {
+            // Kembalikan quantity ke food post
             $claim->foodPost->update([
+                'quantity' => $claim->foodPost->quantity + $claim->quantity,
                 'status' => 'available',
             ]);
         }
