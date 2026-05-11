@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Leaf, ShieldCheck, Sparkles } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowRight, ShieldCheck, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 type AuthShellProps = {
@@ -51,7 +52,7 @@ export default function AuthShell({
       <div className="relative mx-auto grid min-h-[calc(100vh-64px)] max-w-7xl items-center gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:px-8 lg:py-12">
         <div className="hidden rounded-[2rem] border border-emerald-100 bg-white/90 p-8 shadow-[0_24px_80px_-32px_rgba(15,23,42,0.28)] backdrop-blur md:block lg:p-10">
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 ring-1 ring-emerald-100">
-            <Leaf className="h-4 w-4" />
+            <Image src="/images/logo-sro.png" alt="SRO Logo" width={16} height={16} className="h-4 w-4 object-contain" />
             {badge}
           </div>
 
@@ -102,8 +103,8 @@ export default function AuthShell({
                 <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950">{title}</h2>
                 <p className="mt-3 max-w-md text-sm leading-6 text-slate-500">{description}</p>
               </div>
-              <div className="hidden h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-100 sm:flex">
-                <Leaf className="h-7 w-7" />
+              <div className="hidden h-14 w-14 items-center justify-center rounded-2xl bg-emerald-600 shadow-lg shadow-emerald-100 sm:flex">
+                <Image src="/images/logo-sro.png" alt="SRO Logo" width={28} height={28} className="h-7 w-7 object-contain" />
               </div>
             </div>
 

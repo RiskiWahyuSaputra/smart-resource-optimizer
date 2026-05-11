@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Menu, X, Leaf, LayoutDashboard, LogOut, LogIn, UserPlus, ShoppingCart, ShoppingBag } from 'lucide-react';
+import { Menu, X, LayoutDashboard, LogOut, LogIn, UserPlus, ShoppingCart, ShoppingBag } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import CartDrawer from '@/components/marketplace/CartDrawer';
 import { claimFoodPost } from '@/services/marketplaceService';
@@ -90,7 +91,7 @@ const Navbar = () => {
                   ? "bg-emerald-50 border-emerald-200 group-hover:bg-emerald-100"
                   : "bg-white/20 backdrop-blur-sm border-white/30 group-hover:bg-white/30"
               )}>
-                <Leaf className={cn("h-6 w-6", useSolidNavbar ? "text-emerald-600" : "text-white")} />
+                <Image src="/images/logo-sro.png" alt="SRO Logo" width={24} height={24} className="h-6 w-6 object-contain" />
               </div>
               <span className={cn("ml-2.5 text-xl font-bold tracking-tight", useSolidNavbar ? "text-slate-900" : "text-white drop-shadow-lg")}>
                 SRO<span className="text-emerald-500">.</span>
