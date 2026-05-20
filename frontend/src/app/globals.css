@@ -150,6 +150,94 @@ body {
   animation: scroll 2s ease-in-out infinite;
 }
 
+/* Landing page progress reveal */
+.how-heading,
+.how-step-dot,
+.how-step-card {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.how-step-grid {
+  perspective: 1200px;
+}
+
+.how-step-dot {
+  transform: scale(0.7) translateY(14px);
+}
+
+.how-step-card {
+  transform: translateY(34px) rotateX(5deg);
+  transform-origin: top center;
+}
+
+.how-progress-x {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+
+.how-progress-y {
+  transform: scaleY(0);
+  transform-origin: center top;
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s;
+}
+
+.how-meter-fill {
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.how-visible .how-heading,
+.how-visible .how-step-dot,
+.how-visible .how-step-card {
+  opacity: 1;
+  transform: translateY(0) scale(1) rotateX(0deg);
+}
+
+.how-visible .how-progress-x {
+  transform: scaleX(1);
+}
+
+.how-visible .how-progress-y {
+  transform: scaleY(1);
+}
+
+.how-visible .how-meter-fill {
+  transform: scaleX(1);
+}
+
+.how-visible .how-card-shine {
+  animation: shine-sweep 1s ease-out forwards;
+}
+
+@keyframes shine-sweep {
+  from { transform: translateX(0) skewX(-16deg); opacity: 0; }
+  30% { opacity: 0.55; }
+  to { transform: translateX(320%) skewX(-16deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .how-heading,
+  .how-step-dot,
+  .how-step-card,
+  .how-progress-x,
+  .how-progress-y,
+  .how-meter-fill {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .how-visible .how-card-shine {
+    animation: none;
+  }
+}
+
 /* Navbar slide-down on scroll */
 @keyframes navbar-slide-down {
   from { transform: translateY(-100%); opacity: 0; }

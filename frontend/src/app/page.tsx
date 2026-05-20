@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { getFoodPosts, type MarketplaceFoodPost } from "@/services/marketplaceService";
 
 const MapView = dynamic(() => import('@/components/marketplace/MapView'), {
@@ -89,6 +89,8 @@ const progressCardStyles = {
 
 export default function Home() {
   const [foodPosts, setFoodPosts] = useState<MarketplaceFoodPost[]>([]);
+  const [isHowItWorksVisible, setIsHowItWorksVisible] = useState(false);
+  const howItWorksRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     const loadFoodPosts = async () => {
@@ -101,6 +103,33 @@ export default function Home() {
       }
     };
     void loadFoodPosts();
+  }, []);
+
+  useEffect(() => {
+    const section = howItWorksRef.current;
+    if (!section) return;
+
+    if (!("IntersectionObserver" in window)) {
+      const fallbackTimer = window.setTimeout(() => {
+        setIsHowItWorksVisible(true);
+      }, 0);
+
+      return () => window.clearTimeout(fallbackTimer);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsHowItWorksVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.25 },
+    );
+
+    observer.observe(section);
+
+    return () => observer.disconnect();
   }, []);
 
   const mappedPosts = foodPosts
@@ -144,10 +173,15 @@ export default function Home() {
       </section>
 
       {/* How it Works */}
-      <section className="relative overflow-hidden bg-[#f8fbf7] py-24">
+      <section
+        ref={howItWorksRef}
+        className={`relative overflow-hidden bg-[#f8fbf7] py-24 ${
+          isHowItWorksVisible ? "how-visible" : ""
+        }`}
+      >
         <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:42px_42px] opacity-70" />
         <div className="container relative mx-auto px-6">
-          <div className="mx-auto mb-16 max-w-3xl text-center">
+          <div className="how-heading mx-auto mb-16 max-w-3xl text-center">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm">
               <Clock className="h-4 w-4" />
               Alur 3 langkah
@@ -166,16 +200,16 @@ export default function Home() {
               aria-hidden="true"
               className="absolute left-8 top-5 bottom-5 w-1 rounded-full bg-slate-200 md:hidden"
             >
-              <div className="h-full w-full rounded-full bg-gradient-to-b from-emerald-500 via-sky-500 to-amber-500" />
+              <div className="how-progress-y h-full w-full rounded-full bg-gradient-to-b from-emerald-500 via-sky-500 to-amber-500" />
             </div>
             <div
               aria-hidden="true"
               className="absolute left-[16%] right-[16%] top-8 hidden h-2 overflow-hidden rounded-full bg-slate-200 md:block"
             >
-              <div className="h-full w-full rounded-full bg-gradient-to-r from-emerald-500 via-sky-500 to-amber-500" />
+              <div className="how-progress-x h-full w-full rounded-full bg-gradient-to-r from-emerald-500 via-sky-500 to-amber-500" />
             </div>
 
-            <div className="grid gap-8 md:grid-cols-3">
+            <div className="how-step-grid grid gap-8 md:grid-cols-3">
               {howItWorksSteps.map((item, index) => {
                 const Icon = item.icon;
                 const styles = progressCardStyles[item.accent];
@@ -187,13 +221,22 @@ export default function Home() {
                   >
                     <div className="absolute left-2 top-0 z-10 md:static md:mb-8 md:flex md:justify-center">
                       <div
-                        className={`flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold text-white ring-8 ${styles.dot}`}
+                        className={`how-step-dot flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold text-white ring-8 ${styles.dot}`}
+                        style={{ transitionDelay: `${index * 150 + 250}ms` }}
                       >
                         {item.step}
                       </div>
                     </div>
 
-                    <div className="h-full rounded-lg border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition-all duration-300 group-hover:-translate-y-1 group-hover:border-emerald-200 group-hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
+                    <div
+                      className="how-step-card relative h-full overflow-hidden rounded-lg border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition-all duration-300 group-hover:-translate-y-1 group-hover:border-emerald-200 group-hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]"
+                      style={{ transitionDelay: `${index * 150 + 360}ms` }}
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="how-card-shine pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 bg-gradient-to-r from-transparent via-white/70 to-transparent"
+                        style={{ animationDelay: `${index * 170 + 800}ms` }}
+                      />
                       <div className="mb-6 flex items-start justify-between gap-4">
                         <div
                           className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg shadow-lg ${styles.icon}`}
@@ -233,8 +276,11 @@ export default function Home() {
                         </div>
                         <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                           <div
-                            className={`h-full rounded-full ${styles.meter}`}
-                            style={{ width: item.progress }}
+                            className={`how-meter-fill h-full rounded-full ${styles.meter}`}
+                            style={{
+                              width: item.progress,
+                              transitionDelay: `${index * 150 + 650}ms`,
+                            }}
                           />
                         </div>
                       </div>
