@@ -1,7 +1,15 @@
 'use client';
 
 import Link from "next/link";
-import { Leaf, ShieldCheck, Users, MapPin } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Leaf,
+  MapPin,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import HeroSection from "@/components/layout/HeroSection";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
@@ -24,6 +32,60 @@ function normalizeCoordinate(value: number | string | null | undefined, fallback
   }
   return fallback;
 }
+
+const howItWorksSteps = [
+  {
+    step: "01",
+    progress: "33%",
+    title: "Restoran Memposting",
+    description:
+      "Restoran mengunggah makanan berlebih yang masih layak konsumsi lengkap dengan jumlah, foto, lokasi, dan batas waktu pengambilan.",
+    meta: "Posting terverifikasi",
+    icon: Leaf,
+    accent: "emerald",
+  },
+  {
+    step: "02",
+    progress: "66%",
+    title: "Komunitas Menemukan",
+    description:
+      "Komunitas melihat pilihan terdekat melalui marketplace dan peta, lalu mengajukan klaim sesuai kebutuhan distribusi.",
+    meta: "Matching berbasis lokasi",
+    icon: MapPin,
+    accent: "sky",
+  },
+  {
+    step: "03",
+    progress: "100%",
+    title: "Distribusi Aman",
+    description:
+      "Restoran menyetujui klaim, komunitas mengambil makanan, dan seluruh proses tercatat agar distribusi tetap transparan.",
+    meta: "Jejak distribusi jelas",
+    icon: ShieldCheck,
+    accent: "amber",
+  },
+] as const;
+
+const progressCardStyles = {
+  emerald: {
+    icon: "bg-emerald-600 text-white shadow-emerald-900/20",
+    badge: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    meter: "bg-emerald-500",
+    dot: "bg-emerald-500 ring-emerald-100",
+  },
+  sky: {
+    icon: "bg-sky-600 text-white shadow-sky-900/20",
+    badge: "bg-sky-50 text-sky-700 ring-sky-100",
+    meter: "bg-sky-500",
+    dot: "bg-sky-500 ring-sky-100",
+  },
+  amber: {
+    icon: "bg-amber-500 text-white shadow-amber-900/20",
+    badge: "bg-amber-50 text-amber-700 ring-amber-100",
+    meter: "bg-amber-500",
+    dot: "bg-amber-500 ring-amber-100",
+  },
+} as const;
 
 export default function Home() {
   const [foodPosts, setFoodPosts] = useState<MarketplaceFoodPost[]>([]);
@@ -82,45 +144,104 @@ export default function Home() {
       </section>
 
       {/* How it Works */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-950 mb-4">Bagaimana SRO Bekerja?</h2>
-            <p className="text-slate-600 max-w-xl mx-auto text-lg">Platform sederhana yang menghubungkan titik-titik kebaikan dalam ekosistem pangan kita.</p>
+      <section className="relative overflow-hidden bg-[#f8fbf7] py-24">
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(15,23,42,0.04)_1px,transparent_1px),linear-gradient(180deg,rgba(15,23,42,0.04)_1px,transparent_1px)] bg-[size:42px_42px] opacity-70" />
+        <div className="container relative mx-auto px-6">
+          <div className="mx-auto mb-16 max-w-3xl text-center">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm">
+              <Clock className="h-4 w-4" />
+              Alur 3 langkah
+            </div>
+            <h2 className="mb-4 text-3xl font-serif font-bold text-slate-950 md:text-4xl">
+              Bagaimana SRO Bekerja?
+            </h2>
+            <p className="mx-auto max-w-xl text-lg leading-8 text-slate-600">
+              Platform sederhana yang menghubungkan restoran, komunitas, dan
+              proses distribusi dalam satu alur yang jelas.
+            </p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-12">
-            {/* Step 1 */}
-            <div className="group">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
-                <Leaf className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-slate-950">Restoran Memposting</h3>
-              <p className="text-slate-600 leading-relaxed">
-                Restoran memposting daftar makanan berlebih yang masih layak konsumsi dengan rincian jumlah dan waktu kadaluarsa.
-              </p>
+
+          <div className="relative">
+            <div
+              aria-hidden="true"
+              className="absolute left-8 top-5 bottom-5 w-1 rounded-full bg-slate-200 md:hidden"
+            >
+              <div className="h-full w-full rounded-full bg-gradient-to-b from-emerald-500 via-sky-500 to-amber-500" />
+            </div>
+            <div
+              aria-hidden="true"
+              className="absolute left-[16%] right-[16%] top-8 hidden h-2 overflow-hidden rounded-full bg-slate-200 md:block"
+            >
+              <div className="h-full w-full rounded-full bg-gradient-to-r from-emerald-500 via-sky-500 to-amber-500" />
             </div>
 
-            {/* Step 2 */}
-            <div className="group">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
-                <MapPin className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-slate-950">Komunitas Menemukan</h3>
-              <p className="text-slate-600 leading-relaxed">
-                Komunitas terverifikasi mencari makanan terdekat melalui peta interaktif kami yang memudahkan logistik penjemputan.
-              </p>
-            </div>
+            <div className="grid gap-8 md:grid-cols-3">
+              {howItWorksSteps.map((item, index) => {
+                const Icon = item.icon;
+                const styles = progressCardStyles[item.accent];
 
-            {/* Step 3 */}
-            <div className="group">
-              <div className="w-16 h-16 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600 mb-6 group-hover:bg-emerald-600 group-hover:text-white transition-colors duration-500">
-                <ShieldCheck className="w-8 h-8" />
-              </div>
-              <h3 className="text-xl font-bold mb-4 text-slate-950">Distribusi Aman</h3>
-              <p className="text-slate-600 leading-relaxed">
-                Melalui sistem verifikasi ketat, kami menjamin keamanan pangan dan keabsahan penerima manfaat bagi semua pihak.
-              </p>
+                return (
+                  <article
+                    key={item.step}
+                    className="group relative pl-20 md:pl-0"
+                  >
+                    <div className="absolute left-2 top-0 z-10 md:static md:mb-8 md:flex md:justify-center">
+                      <div
+                        className={`flex h-14 w-14 items-center justify-center rounded-full text-sm font-bold text-white ring-8 ${styles.dot}`}
+                      >
+                        {item.step}
+                      </div>
+                    </div>
+
+                    <div className="h-full rounded-lg border border-slate-200/80 bg-white p-6 shadow-[0_18px_45px_rgba(15,23,42,0.08)] transition-all duration-300 group-hover:-translate-y-1 group-hover:border-emerald-200 group-hover:shadow-[0_24px_60px_rgba(15,23,42,0.12)]">
+                      <div className="mb-6 flex items-start justify-between gap-4">
+                        <div
+                          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-lg shadow-lg ${styles.icon}`}
+                        >
+                          <Icon className="h-7 w-7" />
+                        </div>
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ring-1 ${styles.badge}`}
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {item.meta}
+                        </span>
+                      </div>
+
+                      <div className="mb-5 flex items-center gap-3">
+                        <span className="text-sm font-bold text-slate-400">
+                          Step {index + 1}
+                        </span>
+                        {index < howItWorksSteps.length - 1 && (
+                          <ArrowRight className="hidden h-4 w-4 text-slate-300 md:block" />
+                        )}
+                      </div>
+
+                      <h3 className="mb-3 text-xl font-bold text-slate-950">
+                        {item.title}
+                      </h3>
+                      <p className="min-h-24 text-sm leading-7 text-slate-600">
+                        {item.description}
+                      </p>
+
+                      <div className="mt-7">
+                        <div className="mb-2 flex items-center justify-between text-xs font-bold uppercase text-slate-400">
+                          <span>Progress</span>
+                          <span className="text-slate-700">
+                            {item.progress}
+                          </span>
+                        </div>
+                        <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className={`h-full rounded-full ${styles.meter}`}
+                            style={{ width: item.progress }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </div>
         </div>
@@ -146,7 +267,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-slate-600 leading-relaxed italic">
-                "Setiap hari kami punya sisa makanan berkualitas. Dengan SRO, makanan ini sampai ke tangan yang tepat tanpa ribet. Win-win solution!"
+                &quot;Setiap hari kami punya sisa makanan berkualitas. Dengan SRO, makanan ini sampai ke tangan yang tepat tanpa ribet. Win-win solution!&quot;
               </p>
             </div>
 
@@ -161,7 +282,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-slate-600 leading-relaxed italic">
-                "Platform ini memudahkan kami menemukan donasi makanan terdekat. Sistemnya transparan dan proses verifikasinya membuat semua pihak merasa aman."
+                &quot;Platform ini memudahkan kami menemukan donasi makanan terdekat. Sistemnya transparan dan proses verifikasinya membuat semua pihak merasa aman.&quot;
               </p>
             </div>
 
@@ -176,7 +297,7 @@ export default function Home() {
                 </div>
               </div>
               <p className="text-slate-600 leading-relaxed italic">
-                "Setelah event besar, sisa makanan selalu jadi masalah. Sekarang tinggal posting di SRO, dalam hitungan jam sudah ada yang ambil. Luar biasa!"
+                &quot;Setelah event besar, sisa makanan selalu jadi masalah. Sekarang tinggal posting di SRO, dalam hitungan jam sudah ada yang ambil. Luar biasa!&quot;
               </p>
             </div>
           </div>
